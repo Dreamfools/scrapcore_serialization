@@ -8,15 +8,15 @@ members = [
 
 [workspace.dependencies]
 ahash = "0.8.11"
-attribute-derive = "0.6"
-bevy_asset = "0.12.1"
+attribute-derive = "0.9"
+bevy_asset = "0.13"
 bimap = "0.6"
 convert_case = "0.6"
 darling = "0.20.8"
 duplicate = "1"
 itertools = "0.12"
 lazy_static = "1"
-miette = { version = "5", features = ["fancy"] }
+miette = { version = "7", features = ["fancy"] }
 nohash-hasher = "0.2"
 prettyplease = "0.2"
 proc-macro-crate = "3"
