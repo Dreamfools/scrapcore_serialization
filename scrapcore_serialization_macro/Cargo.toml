@@ -23,5 +23,3 @@ thiserror = { workspace = true }
 [dev-dependencies]
 insta = { version = "1.38.0", features = ["glob"] }
 prettyplease = { workspace = true }
-rstest = "0.19"
-syn = { workspace = true, features = ["full"] }
