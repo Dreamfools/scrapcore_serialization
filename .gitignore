@@ -1,0 +1,5 @@
+/target
+.idea
+/ehce/imported_assets
+/ehce/mods/$schema.json
+*.json.meta

@@ -1,0 +1,11 @@
+pub mod registry;
+
+pub mod serialization;
+
+#[cfg(test)]
+mod test;
+
+pub type ItemId = String;
+pub type ItemIdRef<'a> = &'a str;
+pub type AssetName = String;
+pub type AssetNameRef<'a> = &'a str;

@@ -1,0 +1,45 @@
+[workspace]
+resolver = "2"
+members = [
+    "scrapcore_serialization",
+    "scrapcore_serialization_macro",
+    "slabmap",
+]
+
+[workspace.dependencies]
+ahash = "0.8.11"
+attribute-derive = "0.6"
+bevy_asset = "0.12.1"
+bimap = "0.6"
+convert_case = "0.6"
+darling = "0.20.8"
+duplicate = "1"
+glam = { version = "0.24", features = ["bytemuck"] }
+itertools = "0.12"
+lazy_static = "1"
+miette = { version = "5", features = ["fancy"] }
+nohash-hasher = "0.2"
+prettyplease = "0.2"
+proc-macro-crate = "3"
+proc-macro2 = "1.0"
+quote = "1.0"
+schemars = "0.8"
+serde = "1"
+slab = "0.4"
+syn = "2.0"
+thiserror = "1"
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+lto = true
+strip = true
+
+# Enable a small amount of optimization in debug mode
+[profile.dev]
+lto = "off"
+#opt-level = 1
+
+# Enable high optimizations for dependencies (incl. Bevy), but not for our code:
+[profile.dev.package."*"]
+opt-level = 3
