@@ -8,7 +8,7 @@ use syn::{Expr, Path, Type};
 pub struct ModelAttributeConfig {
     /// Custom name for the serialized type
     pub name: Option<Ident>,
-    /// Skips deriving schemars schema
+    /// Skips deriving `schemars` schema
     pub no_schema: Flag,
     /// Extra "where" conditions for the `DeserializeModel` implementation
     #[darling(multiple)]
@@ -44,7 +44,7 @@ pub struct SharedAttributeConfig {
     pub raw: Flag,
 
     /// Forces the field to be deserialized as a given type,
-    /// and then converted into the field type using the From impl
+    /// and then converted into the field type using the `From` impl
     pub from: Option<Type>,
 
     /// Applies min validator to the field

@@ -1,5 +1,5 @@
 use ahash::AHashSet;
-use attribute_derive::Attribute;
+use attribute_derive::{Attribute, FromAttr};
 use convert_case::{Case, Casing};
 use proc_macro2::Ident;
 use quote::format_ident;
@@ -10,9 +10,9 @@ use crate::error::{bail, MacroError};
 use crate::registry::{AssetKind, ModelKind, RegistryDefinitions};
 use crate::serialized_of;
 
-#[derive(Debug, Attribute)]
+#[derive(Debug, FromAttr)]
 struct RegistryAttributeInput {
-    /// Whether to skip emitting schemars derives for the model
+    /// Whether to skip emitting `schemars` derives for the model
     no_schema: bool,
     /// Overrides the name of the registry items. Defaults to the struct name
     /// with "Item" appended
@@ -38,7 +38,7 @@ struct RegistryAttributeInput {
     error: Type,
 }
 
-#[derive(Debug, Attribute)]
+#[derive(Debug, FromAttr)]
 #[attribute(ident = model)]
 struct ModelAttributeInput {
     #[attribute(conflicts=[collection, singleton])]
@@ -53,7 +53,7 @@ pub(super) fn parse_struct_defs(
     data: &mut ItemStruct,
 ) -> Result<RegistryDefinitions, MacroError> {
     let mut used_types = AHashSet::default();
-    let input = RegistryAttributeInput::from_args(attr.into())?;
+    let input = RegistryAttributeInput::from_input(attr)?;
     let registry_item_name = input
         .item_name
         .unwrap_or_else(|| format_ident!("{}Item", data.ident));
