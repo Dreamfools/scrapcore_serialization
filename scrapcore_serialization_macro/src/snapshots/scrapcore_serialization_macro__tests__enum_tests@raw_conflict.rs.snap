@@ -1,0 +1,13 @@
+---
+source: scrapcore_serialization_macro/src/tests.rs
+expression: check_model(path)
+input_file: scrapcore_serialization_macro/src/test_cases/model/enum/raw_conflict.rs
+---
+#[derive(Debug, DatabaseModel)]
+enum Test {
+    #[model(with = "convert", raw)]
+    A(u32),
+}
+::core::compile_error! {
+    "`raw` attribute field can not be used at the same time as `ty` or `with` attributes"
+}

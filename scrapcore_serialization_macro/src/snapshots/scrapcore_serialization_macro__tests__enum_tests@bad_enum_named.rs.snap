@@ -1,0 +1,13 @@
+---
+source: scrapcore_serialization_macro/src/tests.rs
+expression: check_model(path)
+input_file: scrapcore_serialization_macro/src/test_cases/model/enum/bad_enum_named.rs
+---
+#[derive(Debug, DatabaseModel)]
+enum Test {
+    #[model(with = "convert", raw)]
+    A { name: u32 },
+}
+::core::compile_error! {
+    "Unsupported shape `named fields`. Expected one unnamed field or no fields."
+}

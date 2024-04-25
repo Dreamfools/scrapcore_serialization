@@ -8,6 +8,7 @@ enum Test {
     A(u32),
     B(String),
     C(Vec<Test>),
+    D,
 }
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[derive(schemars::JsonSchema)]
@@ -21,6 +22,7 @@ pub enum TestSerialized {
             Test,
         > as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
     ),
+    D,
 }
 #[automatically_derived]
 impl scrapcore_serialization::serialization::SerializationFallback for Test {
@@ -112,6 +114,7 @@ where
                         )?,
                     )
                 }
+                Self::D => Test::D,
             },
         )
     }
