@@ -5,7 +5,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{parse_macro_input, ItemStruct, Type, Visibility};
 
-use crate::error::MacroError;
+use crate::error::{tokens, MacroError};
 use crate::registry::parser::parse_struct_defs;
 use crate::{MOD_ERRORS, MOD_REGISTRY};
 
@@ -16,27 +16,7 @@ pub fn registry_impl(
     item_struct: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let item_struct = parse_macro_input!(item_struct);
-    match registry_impl_inner(attr.into(), item_struct) {
-        Ok(data) => {
-            #[cfg(feature = "debug_output")]
-            match syn::parse(data.clone().into()) {
-                Ok(file) => {
-                    eprintln!("=============================");
-                    eprintln!("Source:\n{}", prettyplease::unparse(&file));
-                    eprintln!("=============================");
-                }
-                Err(err) => {
-                    eprintln!("=============================");
-                    eprintln!("Code parsing error:\n{}", err);
-                    eprintln!("=============================");
-                    eprintln!("Source:\n{}", data);
-                    eprintln!("=============================");
-                }
-            }
-            data.into()
-        }
-        Err(err) => err.into_tokens().into(),
-    }
+    tokens(registry_impl_inner(attr.into(), item_struct)).into()
 }
 
 #[derive(Debug)]

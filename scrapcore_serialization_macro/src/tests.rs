@@ -4,8 +4,8 @@ use crate::model::model_macro_impl;
 use proc_macro2::TokenStream;
 use quote::{quote, TokenStreamExt};
 
-use std::path::Path;
 use crate::registry::registry_impl_inner;
+use std::path::Path;
 
 fn check_model(path: &Path) -> String {
     let data = std::fs::read_to_string(path).expect("Should be able to read the file");
@@ -25,14 +25,18 @@ fn check_model(path: &Path) -> String {
 
 fn check_registry(path: &Path) -> String {
     let data = std::fs::read_to_string(path).expect("Should be able to read the file");
-    let (attribute, structure) = data.split_once("\n").expect("Test case data should have an attribute-marked input");
+    let (attribute, structure) = data
+        .split_once('\n')
+        .expect("Test case data should have an attribute-marked input");
 
-    let attribute = attribute.trim_start_matches("#[registry(").trim_end_matches(")]");
+    let attribute = attribute
+        .trim_start_matches("#[registry(")
+        .trim_end_matches(")]");
 
-    let mut attribute: TokenStream = attribute
+    let attribute: TokenStream = attribute
         .parse()
         .expect("Test case data should be a valid rust file");
-    let mut structure: TokenStream = structure
+    let structure: TokenStream = structure
         .parse()
         .expect("Test case data should be a valid rust file");
     let tokens = tokens(registry_impl_inner(
@@ -49,7 +53,6 @@ fn check_registry(path: &Path) -> String {
     let file: syn::File = syn::parse2(stream).expect("Should generate valid rust code");
 
     prettyplease::unparse(&file)
-
 }
 
 #[test]
@@ -58,7 +61,6 @@ fn struct_tests() {
         insta::assert_snapshot!(check_model(path))
     });
 }
-
 
 #[test]
 fn enum_tests() {

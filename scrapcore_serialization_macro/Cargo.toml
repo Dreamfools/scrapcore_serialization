@@ -14,7 +14,6 @@ convert_case = { workspace = true }
 darling = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
-prettyplease = { workspace = true, optional = true }
 proc-macro-crate = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
@@ -26,6 +25,3 @@ insta = { version = "1.38.0", features = ["glob"] }
 prettyplease = { workspace = true }
 rstest = "0.19"
 syn = { workspace = true, features = ["full"] }
-
-[features]
-debug_output = ["dep:prettyplease"]
