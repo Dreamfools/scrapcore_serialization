@@ -28,3 +28,11 @@ fn struct_tests() {
         insta::assert_snapshot!(check_model(path))
     });
 }
+
+
+#[test]
+fn enum_tests() {
+    insta::glob!("test_cases/model/enum/*.rs", |path| {
+        insta::assert_snapshot!(check_model(path))
+    });
+}
