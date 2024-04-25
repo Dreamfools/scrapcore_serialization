@@ -12,9 +12,8 @@ use crate::serialized_of;
 
 #[derive(Debug, Attribute)]
 struct RegistryAttributeInput {
-    /// Whether to emit schemars derives for the model
-    #[attribute(default = true)]
-    schema: bool,
+    /// Whether to skip emitting schemars derives for the model
+    no_schema: bool,
     /// Overrides the name of the registry items. Defaults to the struct name
     /// with "Item" appended
     item_name: Option<Ident>,
@@ -50,7 +49,7 @@ struct ModelAttributeInput {
     singleton: bool,
 }
 pub(super) fn parse_struct_defs(
-    attr: proc_macro::TokenStream,
+    attr: proc_macro2::TokenStream,
     data: &mut ItemStruct,
 ) -> Result<RegistryDefinitions, MacroError> {
     let mut used_types = AHashSet::default();
@@ -84,7 +83,7 @@ pub(super) fn parse_struct_defs(
         assets_kind_name,
         model_name: registry_item_name,
         error: input.error,
-        schema: input.schema,
+        schema: !input.no_schema,
         singletons: Default::default(),
         collections: Default::default(),
         assets: Default::default(),

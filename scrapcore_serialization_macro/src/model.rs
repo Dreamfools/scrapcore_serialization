@@ -60,7 +60,7 @@ impl ModelAttributeConfig {
     }
 }
 
-pub fn model_macro_impl(input: DeriveInput) -> Result<TokenStream, MacroError> {
+pub(crate) fn model_macro_impl(input: DeriveInput) -> Result<TokenStream, MacroError> {
     let data = ModelAttributeInput::from_derive_input(&input)?;
 
     match data.data {

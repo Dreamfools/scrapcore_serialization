@@ -17,7 +17,7 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 schemars = { workspace = true }
-scrapcore_serialization_macro = { path = "../scrapcore_serialization_macro", features = ["debug_output"] }
+scrapcore_serialization_macro = { path = "../scrapcore_serialization_macro" }
 
 [features]
 miette = ["dep:miette"]

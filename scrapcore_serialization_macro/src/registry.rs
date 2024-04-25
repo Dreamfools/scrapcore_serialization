@@ -16,7 +16,7 @@ pub fn registry_impl(
     item_struct: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let item_struct = parse_macro_input!(item_struct);
-    match registry_impl_inner(attr, item_struct) {
+    match registry_impl_inner(attr.into(), item_struct) {
         Ok(data) => {
             #[cfg(feature = "debug_output")]
             match syn::parse(data.clone().into()) {
@@ -102,8 +102,8 @@ struct RegistryDefinitions {
     assets: Vec<AssetKind>,
 }
 
-fn registry_impl_inner(
-    attr: proc_macro::TokenStream,
+pub(crate) fn registry_impl_inner(
+    attr: TokenStream,
     mut item_struct: ItemStruct,
 ) -> Result<TokenStream, MacroError> {
     let definitions = parse_struct_defs(attr, &mut item_struct)?;
