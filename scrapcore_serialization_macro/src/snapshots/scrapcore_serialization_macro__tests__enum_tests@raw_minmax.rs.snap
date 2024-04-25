@@ -1,0 +1,108 @@
+---
+source: scrapcore_serialization_macro/src/tests.rs
+expression: check_model(path)
+input_file: scrapcore_serialization_macro/src/test_cases/model/enum/raw_minmax.rs
+---
+#[derive(Debug, DatabaseModel)]
+enum Test {
+    #[model(raw, min = 5)]
+    WithMin(u32),
+    #[model(raw, max = 15)]
+    WithMax(u32),
+    #[model(raw, min = -5, max = 15)]
+    WithMinMax(u32),
+}
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(schemars::JsonSchema)]
+pub enum TestSerialized {
+    WithMin(u32),
+    WithMax(u32),
+    WithMinMax(u32),
+}
+#[automatically_derived]
+impl scrapcore_serialization::serialization::SerializationFallback for Test {
+    type Fallback = TestSerialized;
+}
+#[automatically_derived]
+impl AsRef<Test> for Test {
+    fn as_ref(&self) -> &Test {
+        &self
+    }
+}
+#[automatically_derived]
+impl<Registry> scrapcore_serialization::serialization::DeserializeModel<Test, Registry>
+for TestSerialized
+where
+    Registry: scrapcore_serialization::registry::PartialRegistry,
+{
+    fn deserialize(
+        self,
+        registry: &mut Registry,
+    ) -> Result<
+        Test,
+        scrapcore_serialization::serialization::error::DeserializationError<Registry>,
+    > {
+        Ok(
+            match self {
+                Self::WithMin(item) => {
+                    Test::WithMin(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: u32 = item;
+                                let item: u32 = scrapcore_serialization::serialization::ApplyMin::apply(
+                                    item,
+                                    5,
+                                )?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(WithMin),
+                            )),
+                        )?,
+                    )
+                }
+                Self::WithMax(item) => {
+                    Test::WithMax(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: u32 = item;
+                                let item: u32 = scrapcore_serialization::serialization::ApplyMax::apply(
+                                    item,
+                                    15,
+                                )?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(WithMax),
+                            )),
+                        )?,
+                    )
+                }
+                Self::WithMinMax(item) => {
+                    Test::WithMinMax(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: u32 = item;
+                                let item: u32 = scrapcore_serialization::serialization::ApplyMin::apply(
+                                    item,
+                                    -5,
+                                )?;
+                                let item: u32 = scrapcore_serialization::serialization::ApplyMax::apply(
+                                    item,
+                                    15,
+                                )?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(WithMinMax),
+                            )),
+                        )?,
+                    )
+                }
+            },
+        )
+    }
+}

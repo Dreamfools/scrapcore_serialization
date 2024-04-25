@@ -1,0 +1,118 @@
+---
+source: scrapcore_serialization_macro/src/tests.rs
+expression: check_model(path)
+input_file: scrapcore_serialization_macro/src/test_cases/model/enum/no_schema.rs
+---
+#[derive(Debug, DatabaseModel)]
+#[model(no_schema)]
+enum Test {
+    A(u32),
+    B(String),
+    C(Vec<Test>),
+}
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub enum TestSerialized {
+    A(<u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback),
+    B(
+        <String as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+    ),
+    C(
+        <Vec<
+            Test,
+        > as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+    ),
+}
+#[automatically_derived]
+impl scrapcore_serialization::serialization::SerializationFallback for Test {
+    type Fallback = TestSerialized;
+}
+#[automatically_derived]
+impl AsRef<Test> for Test {
+    fn as_ref(&self) -> &Test {
+        &self
+    }
+}
+#[automatically_derived]
+impl<Registry> scrapcore_serialization::serialization::DeserializeModel<Test, Registry>
+for TestSerialized
+where
+    <u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        u32,
+        Registry,
+    >,
+    <String as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        String,
+        Registry,
+    >,
+    <Vec<
+        Test,
+    > as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        Vec<Test>,
+        Registry,
+    >,
+    Registry: scrapcore_serialization::registry::PartialRegistry,
+{
+    fn deserialize(
+        self,
+        registry: &mut Registry,
+    ) -> Result<
+        Test,
+        scrapcore_serialization::serialization::error::DeserializationError<Registry>,
+    > {
+        Ok(
+            match self {
+                Self::A(item) => {
+                    Test::A(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: u32 = scrapcore_serialization::serialization::DeserializeModel::<
+                                    u32,
+                                    Registry,
+                                >::deserialize(item, registry)?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(A),
+                            )),
+                        )?,
+                    )
+                }
+                Self::B(item) => {
+                    Test::B(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: String = scrapcore_serialization::serialization::DeserializeModel::<
+                                    String,
+                                    Registry,
+                                >::deserialize(item, registry)?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(B),
+                            )),
+                        )?,
+                    )
+                }
+                Self::C(item) => {
+                    Test::C(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: Vec<Test> = scrapcore_serialization::serialization::DeserializeModel::<
+                                    Vec<Test>,
+                                    Registry,
+                                >::deserialize(item, registry)?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(C),
+                            )),
+                        )?,
+                    )
+                }
+            },
+        )
+    }
+}

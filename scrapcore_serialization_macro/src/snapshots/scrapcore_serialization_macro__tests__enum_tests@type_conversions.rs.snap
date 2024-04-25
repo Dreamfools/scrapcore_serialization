@@ -1,0 +1,164 @@
+---
+source: scrapcore_serialization_macro/src/tests.rs
+expression: check_model(path)
+input_file: scrapcore_serialization_macro/src/test_cases/model/enum/type_conversions.rs
+---
+#[derive(Debug, DatabaseModel)]
+enum Test {
+    #[model(raw)]
+    A(u32),
+    #[model(with = custom_fn)]
+    B(String),
+    #[model(ty = "FxHashMap<ItemId, f64>")]
+    C(IntMap<VariableId, f64>),
+    #[model(ty = "f32", with = "stringify_fn")]
+    D(String),
+    #[model(from = "u32")]
+    E(u64),
+    #[model(raw, from = "u32")]
+    E(u64),
+}
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(schemars::JsonSchema)]
+pub enum TestSerialized {
+    A(u32),
+    B(
+        <String as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+    ),
+    C(FxHashMap<ItemId, f64>),
+    D(f32),
+    E(<u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback),
+    E(u32),
+}
+#[automatically_derived]
+impl scrapcore_serialization::serialization::SerializationFallback for Test {
+    type Fallback = TestSerialized;
+}
+#[automatically_derived]
+impl AsRef<Test> for Test {
+    fn as_ref(&self) -> &Test {
+        &self
+    }
+}
+#[automatically_derived]
+impl<Registry> scrapcore_serialization::serialization::DeserializeModel<Test, Registry>
+for TestSerialized
+where
+    FxHashMap<
+        ItemId,
+        f64,
+    >: scrapcore_serialization::serialization::DeserializeModel<
+        IntMap<VariableId, f64>,
+        Registry,
+    >,
+    <u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        u32,
+        Registry,
+    >,
+    Registry: scrapcore_serialization::registry::PartialRegistry,
+{
+    fn deserialize(
+        self,
+        registry: &mut Registry,
+    ) -> Result<
+        Test,
+        scrapcore_serialization::serialization::error::DeserializationError<Registry>,
+    > {
+        Ok(
+            match self {
+                Self::A(item) => {
+                    Test::A(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: u32 = item;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(A),
+                            )),
+                        )?,
+                    )
+                }
+                Self::B(item) => {
+                    Test::B(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: String = custom_fn(item, registry)?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(B),
+                            )),
+                        )?,
+                    )
+                }
+                Self::C(item) => {
+                    Test::C(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: IntMap<VariableId, f64> = scrapcore_serialization::serialization::DeserializeModel::<
+                                    IntMap<VariableId, f64>,
+                                    Registry,
+                                >::deserialize(item, registry)?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(C),
+                            )),
+                        )?,
+                    )
+                }
+                Self::D(item) => {
+                    Test::D(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: String = stringify_fn(item, registry)?;
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(D),
+                            )),
+                        )?,
+                    )
+                }
+                Self::E(item) => {
+                    Test::E(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: u32 = scrapcore_serialization::serialization::DeserializeModel::<
+                                    u32,
+                                    Registry,
+                                >::deserialize(item, registry)?;
+                                let item: u64 = <u64 as From<u32>>::from(item);
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(E),
+                            )),
+                        )?,
+                    )
+                }
+                Self::E(item) => {
+                    Test::E(
+                        scrapcore_serialization::serialization::error::s_try(
+                            &mut *registry,
+                            |registry: &mut Registry| {
+                                let item: u32 = item;
+                                let item: u64 = <u64 as From<u32>>::from(item);
+                                Ok(item)
+                            },
+                            Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Variant(
+                                stringify!(E),
+                            )),
+                        )?,
+                    )
+                }
+            },
+        )
+    }
+}
