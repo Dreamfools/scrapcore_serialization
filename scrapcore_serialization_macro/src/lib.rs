@@ -35,7 +35,7 @@ impl Display for IdentSync {
 
 impl ToTokens for IdentSync {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let ty: syn::Type = parse_str(&self.0).unwrap();
+        let ty: Type = parse_str(&self.0).unwrap();
         // proc_macro2::Ident::new(&self.0, Span::call_site()).to_tokens(tokens)
         ty.to_tokens(tokens)
     }

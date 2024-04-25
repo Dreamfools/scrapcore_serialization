@@ -1961,7 +1961,6 @@ dependencies = [
  "ahash",
  "bevy_asset",
  "duplicate",
- "glam",
  "itertools",
  "miette",
  "schemars",
