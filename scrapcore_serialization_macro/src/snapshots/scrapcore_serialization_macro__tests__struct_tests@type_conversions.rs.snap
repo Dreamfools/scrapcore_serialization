@@ -13,6 +13,10 @@ struct Test {
     c: IntMap<VariableId, f64>,
     #[model(ty = "f32", with = "stringify_fn")]
     d: String,
+    #[model(from = "u32")]
+    e: u64,
+    #[model(raw, from = "u32")]
+    e: u64,
 }
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[derive(schemars::JsonSchema)]
@@ -22,6 +26,8 @@ pub struct TestSerialized {
     b: <String as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
     c: FxHashMap<ItemId, f64>,
     d: f32,
+    e: <u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+    e: u32,
 }
 #[automatically_derived]
 impl scrapcore_serialization::serialization::SerializationFallback for Test {
@@ -44,6 +50,10 @@ where
         IntMap<VariableId, f64>,
         Registry,
     >,
+    <u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        u32,
+        Registry,
+    >,
     Registry: scrapcore_serialization::registry::PartialRegistry,
 {
     fn deserialize(
@@ -58,7 +68,8 @@ where
             a: {
                 let item = serialized.a;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: u32 = item;
                         Ok(item)
                     },
@@ -70,7 +81,8 @@ where
             b: {
                 let item = serialized.b;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: String = custom_fn(item, registry)?;
                         Ok(item)
                     },
@@ -82,7 +94,8 @@ where
             c: {
                 let item = serialized.c;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: IntMap<VariableId, f64> = scrapcore_serialization::serialization::DeserializeModel::<
                             IntMap<VariableId, f64>,
                             Registry,
@@ -97,12 +110,44 @@ where
             d: {
                 let item = serialized.d;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: String = stringify_fn(item, registry)?;
                         Ok(item)
                     },
                     Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Field(
                         stringify!(d),
+                    )),
+                )?
+            },
+            e: {
+                let item = serialized.e;
+                scrapcore_serialization::serialization::error::s_try(
+                    &mut *registry,
+                    |registry: &mut Registry| {
+                        let item: u32 = scrapcore_serialization::serialization::DeserializeModel::<
+                            u32,
+                            Registry,
+                        >::deserialize(item, registry)?;
+                        let item: u64 = <u64 as From<u32>>::from(item);
+                        Ok(item)
+                    },
+                    Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Field(
+                        stringify!(e),
+                    )),
+                )?
+            },
+            e: {
+                let item = serialized.e;
+                scrapcore_serialization::serialization::error::s_try(
+                    &mut *registry,
+                    |registry: &mut Registry| {
+                        let item: u32 = item;
+                        let item: u64 = <u64 as From<u32>>::from(item);
+                        Ok(item)
+                    },
+                    Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Field(
+                        stringify!(e),
                     )),
                 )?
             },

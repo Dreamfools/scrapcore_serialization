@@ -1,6 +1,6 @@
 ---
 source: scrapcore_serialization_macro/src/tests.rs
-expression: check_model(&path)
+expression: check_model(path)
 input_file: scrapcore_serialization_macro/src/test_cases/model/struct/simple_case.rs
 ---
 #[derive(Debug, DatabaseModel)]
@@ -61,7 +61,8 @@ where
             a: {
                 let item = serialized.a;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: u32 = scrapcore_serialization::serialization::DeserializeModel::<
                             u32,
                             Registry,
@@ -76,7 +77,8 @@ where
             b: {
                 let item = serialized.b;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: String = scrapcore_serialization::serialization::DeserializeModel::<
                             String,
                             Registry,
@@ -91,7 +93,8 @@ where
             c: {
                 let item = serialized.c;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: Vec<Test> = scrapcore_serialization::serialization::DeserializeModel::<
                             Vec<Test>,
                             Registry,

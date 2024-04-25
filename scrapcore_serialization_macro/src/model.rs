@@ -119,11 +119,12 @@ impl SharedAttributeConfig {
     fn serialized_ty<'a>(&'a self, field_ty: &'a Type) -> Result<Cow<'a, Type>, MacroError> {
         // "raw" fields use their target type directly, otherwise lookup
         // `#[model(ty=T)]` or use `SerializationFallback`
+        let field_ty = self.from.as_ref().unwrap_or(field_ty);
         let ty = if self.raw.is_present() {
             if self.custom_ty.is_some() || self.with.is_some() {
                 bail!(self.raw.span(), "`raw` attribute field can not be used at the same time as `ty` or `with` attributes")
             }
-            Cow::Borrowed(self.from.as_ref().unwrap_or(field_ty))
+            Cow::Borrowed(field_ty)
         } else if let Some(ty) = &self.custom_ty {
             Cow::Borrowed(ty)
         } else {
@@ -135,6 +136,7 @@ impl SharedAttributeConfig {
 
     fn where_condition(&self, original_type: &Type, serialized_type: &Type) -> Option<TokenStream> {
         let ser = MOD_SERIALIZATION.deref();
+        let original_type = self.from.as_ref().unwrap_or(original_type);
         (self.with.is_none() && !self.raw.is_present()).then(|| {
             quote! {
                 #serialized_type: #ser::DeserializeModel::<#original_type, Registry>
@@ -197,7 +199,7 @@ impl SharedAttributeConfig {
         };
 
         let code = quote! {
-            #err::s_try(|| {
+            #err::s_try(&mut *registry, |registry: &mut Registry| {
                 #(#blocks)*
                 Ok(#varname)
             }, #context)?

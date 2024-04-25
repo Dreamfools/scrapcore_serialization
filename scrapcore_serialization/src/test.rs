@@ -1,5 +1,6 @@
 use std::convert::Infallible;
 use std::fmt::Debug;
+use std::path::PathBuf;
 use thiserror::Error;
 
 use scrapcore_serialization_macro::{registry, DatabaseModel};
@@ -11,10 +12,12 @@ pub struct A {
 
 #[derive(Debug, DatabaseModel)]
 pub struct B {
-    #[model(raw, min = 5)]
+    #[model(raw, min = 5, from = "u16")]
     a: u32,
     #[model(ty="f32", with=test_a)]
     b: u32,
+    #[model(from = "String")]
+    c: PathBuf,
 }
 
 #[derive(Debug, DatabaseModel)]

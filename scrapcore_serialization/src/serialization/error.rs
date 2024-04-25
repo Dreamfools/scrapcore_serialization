@@ -161,11 +161,12 @@ where
 /// Helper for wrapping a code block to help with contextualizing errors
 /// Better editor support
 #[inline(always)]
-pub fn s_try<T, Registry: SerializationRegistry>(
-    func: impl FnOnce() -> Result<T, DeserializationError<Registry>>,
+pub fn s_try<Args, T, Registry: SerializationRegistry>(
+    args: Args,
+    func: impl FnOnce(Args) -> Result<T, DeserializationError<Registry>>,
     context: Option<impl FnOnce() -> DeserializationErrorStackItem<Registry>>,
 ) -> Result<T, DeserializationError<Registry>> {
-    let result = func();
+    let result = func(args);
     if let Some(context) = context {
         result.map_err(|e| e.context(context()))
     } else {

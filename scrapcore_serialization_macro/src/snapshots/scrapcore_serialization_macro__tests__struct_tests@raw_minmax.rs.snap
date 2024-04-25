@@ -48,7 +48,8 @@ where
             with_min: {
                 let item = serialized.with_min;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: u32 = item;
                         let item: u32 = scrapcore_serialization::serialization::ApplyMin::apply(
                             item,
@@ -64,7 +65,8 @@ where
             with_max: {
                 let item = serialized.with_max;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: u32 = item;
                         let item: u32 = scrapcore_serialization::serialization::ApplyMax::apply(
                             item,
@@ -80,7 +82,8 @@ where
             with_min_max: {
                 let item = serialized.with_min_max;
                 scrapcore_serialization::serialization::error::s_try(
-                    || {
+                    &mut *registry,
+                    |registry: &mut Registry| {
                         let item: u32 = item;
                         let item: u32 = scrapcore_serialization::serialization::ApplyMin::apply(
                             item,

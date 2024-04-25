@@ -8,4 +8,8 @@ struct Test {
     c: IntMap<VariableId, f64>,
     #[model(ty = "f32", with = "stringify_fn")]
     d: String,
+    #[model(from = "u32")]
+    e: u64,
+    #[model(raw, from = "u32")]
+    e: u64,
 }
