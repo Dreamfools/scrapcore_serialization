@@ -10,8 +10,6 @@ pub struct ModelAttributeConfig {
     pub name: Option<Ident>,
     /// Skips deriving schemars schema
     pub no_schema: Flag,
-    /// Type of the deserialization registry
-    pub registry: Option<Type>,
     /// Extra "where" conditions for the `DeserializeModel` implementation
     #[darling(multiple)]
     #[darling(rename = "condition")]

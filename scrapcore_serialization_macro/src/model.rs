@@ -22,7 +22,7 @@ mod attrs;
 /// Derive attribute
 #[derive(Debug, FromDeriveInput)]
 #[darling(
-    attributes(my_crate),
+    attributes(model),
     forward_attrs(model_attr, model_serde),
     supports(struct_named, enum_newtype, enum_unit)
 )]

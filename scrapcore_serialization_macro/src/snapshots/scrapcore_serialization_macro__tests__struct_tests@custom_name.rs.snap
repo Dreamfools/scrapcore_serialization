@@ -1,0 +1,112 @@
+---
+source: scrapcore_serialization_macro/src/tests.rs
+expression: check_model(path)
+input_file: scrapcore_serialization_macro/src/test_cases/model/struct/custom_name.rs
+---
+#[derive(Debug, DatabaseModel)]
+#[model(name = CustomName)]
+struct Test {
+    a: u32,
+    b: String,
+    c: Vec<Test>,
+}
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(schemars::JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct CustomName {
+    a: <u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+    b: <String as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+    c: <Vec<
+        Test,
+    > as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+}
+#[automatically_derived]
+impl scrapcore_serialization::serialization::SerializationFallback for Test {
+    type Fallback = CustomName;
+}
+#[automatically_derived]
+impl AsRef<Test> for Test {
+    fn as_ref(&self) -> &Test {
+        &self
+    }
+}
+#[automatically_derived]
+impl<Registry> scrapcore_serialization::serialization::DeserializeModel<Test, Registry>
+for CustomName
+where
+    <u32 as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        u32,
+        Registry,
+    >,
+    <String as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        String,
+        Registry,
+    >,
+    <Vec<
+        Test,
+    > as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
+        Vec<Test>,
+        Registry,
+    >,
+    Registry: scrapcore_serialization::registry::PartialRegistry,
+{
+    fn deserialize(
+        self,
+        registry: &mut Registry,
+    ) -> Result<
+        Test,
+        scrapcore_serialization::serialization::error::DeserializationError<Registry>,
+    > {
+        let serialized = self;
+        Ok(Test {
+            a: {
+                let item = serialized.a;
+                scrapcore_serialization::serialization::error::s_try(
+                    &mut *registry,
+                    |registry: &mut Registry| {
+                        let item: u32 = scrapcore_serialization::serialization::DeserializeModel::<
+                            u32,
+                            Registry,
+                        >::deserialize(item, registry)?;
+                        Ok(item)
+                    },
+                    Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Field(
+                        stringify!(a),
+                    )),
+                )?
+            },
+            b: {
+                let item = serialized.b;
+                scrapcore_serialization::serialization::error::s_try(
+                    &mut *registry,
+                    |registry: &mut Registry| {
+                        let item: String = scrapcore_serialization::serialization::DeserializeModel::<
+                            String,
+                            Registry,
+                        >::deserialize(item, registry)?;
+                        Ok(item)
+                    },
+                    Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Field(
+                        stringify!(b),
+                    )),
+                )?
+            },
+            c: {
+                let item = serialized.c;
+                scrapcore_serialization::serialization::error::s_try(
+                    &mut *registry,
+                    |registry: &mut Registry| {
+                        let item: Vec<Test> = scrapcore_serialization::serialization::DeserializeModel::<
+                            Vec<Test>,
+                            Registry,
+                        >::deserialize(item, registry)?;
+                        Ok(item)
+                    },
+                    Some(|| scrapcore_serialization::serialization::error::DeserializationErrorStackItem::Field(
+                        stringify!(c),
+                    )),
+                )?
+            },
+        })
+    }
+}
