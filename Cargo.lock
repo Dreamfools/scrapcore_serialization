@@ -1950,7 +1950,6 @@ dependencies = [
 name = "scrapcore_serialization_macro"
 version = "0.1.0"
 dependencies = [
- "ahash",
  "attribute-derive",
  "convert_case",
  "darling",

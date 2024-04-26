@@ -1,0 +1,15 @@
+---
+source: scrapcore_serialization_macro/src/tests.rs
+expression: check_registry(path)
+input_file: scrapcore_serialization_macro/src/test_cases/registry/duplicate_types.rs
+---
+#[registry(error = ModelError, no_schema)]
+pub struct Model {
+    #[model(collection)]
+    test1: A,
+    #[model(singleton)]
+    test2: A,
+}
+::core::compile_error! {
+    "This type is already defined in the model"
+}

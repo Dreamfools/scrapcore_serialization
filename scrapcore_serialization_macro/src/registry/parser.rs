@@ -1,4 +1,3 @@
-use ahash::AHashSet;
 use attribute_derive::{Attribute, FromAttr};
 use convert_case::{Case, Casing};
 use proc_macro2::Ident;
@@ -52,7 +51,7 @@ pub(super) fn parse_struct_defs(
     attr: proc_macro2::TokenStream,
     data: &mut ItemStruct,
 ) -> Result<RegistryDefinitions, MacroError> {
-    let mut used_types = AHashSet::default();
+    let mut used_types = vec![];
     let input = RegistryAttributeInput::from_input(attr)?;
     let registry_item_name = input
         .item_name
@@ -91,8 +90,10 @@ pub(super) fn parse_struct_defs(
     };
 
     for field in &mut data.fields {
-        if !used_types.insert(&field.ty) {
+        if used_types.contains(&&field.ty) {
             bail!(field.ty.span(), "This type is already defined in the model")
+        } else {
+            used_types.push(&field.ty);
         }
         let attribute = ModelAttributeInput::remove_attributes(&mut field.attrs)?;
         let name = field
