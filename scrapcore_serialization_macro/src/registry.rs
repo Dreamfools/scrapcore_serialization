@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use itertools::Itertools;
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::{format_ident, quote, quote_spanned};
+use quote::{quote, quote_spanned};
 use syn::{parse_macro_input, ItemStruct, Type, Visibility};
 
 use crate::error::{tokens, MacroError};
@@ -669,7 +669,6 @@ impl RegistryDefinitions {
         let entries = collections.iter().map(
             |ModelKind {
                  span,
-                 variant_name,
                  ty,
                  id_name,
                 ..
