@@ -38,7 +38,7 @@ pub struct SharedAttributeConfig {
     ///
     /// This flag is identical to using`#[model(ty=T, with=identity_function)]`,
     /// where `T` is the field type, and so this flag is **conflicting** with
-    /// `ty` and `with` flag
+    /// `ty` and `with` flags
     ///
     /// Useful for types from external crates that do not implement `DeserializeModel`
     pub raw: Flag,
@@ -51,6 +51,23 @@ pub struct SharedAttributeConfig {
     pub min: Option<Expr>,
     /// Applies max validator to the field
     pub max: Option<Expr>,
+
+    /// Marks the field as "Id" field, emitting a different `where` condition.
+    ///
+    /// Often useful for avoiding recursive trait bounds.
+    ///
+    /// Relies on `ReverseId` trait:
+    /// `where Registry: PartialCollectionHolder<<T as ReverseId>::Item>`
+    /// where `T` is the field type
+    pub id: Flag,
+
+    /// Same as [id], but uses the provided type instead of relying on a trait
+    ///
+    /// Often useful for avoiding recursive trait bounds.
+    ///
+    /// Example generated condition:
+    /// `where Registry: PartialCollectionHolder<T>` where `T` is the provided type
+    pub id_of: Option<Type>,
 
     /// Skips generating `where` condition for this field
     ///

@@ -9,12 +9,11 @@ use scrapcore_serialization::registry::PartialCollectionHolder;
 mod tests;
 
 #[derive(Debug, DatabaseModel)]
-#[model(condition = "where Registry: PartialCollectionHolder<Person>")]
 struct Person {
     name: String,
-    #[model(no_condition)]
+    #[model(id)]
     mom: Option<PersonId>,
-    #[model(no_condition)]
+    #[model(id)]
     dad: Option<PersonId>,
 }
 

@@ -164,7 +164,7 @@ pub fn process_struct(
         })
         .try_collect()?;
 
-    let field_where_conditions = fields.iter().filter_map(
+    let field_where_conditions = fields.iter().map(
         |FieldData {
              original_type,
              serialized_type,
@@ -172,6 +172,8 @@ pub fn process_struct(
              ..
          }| { config.where_condition(original_type, serialized_type) },
     );
+
+    let field_where_conditions = itertools::process_results(field_where_conditions, |i| i.flatten().collect_vec())?;
 
     let (_, gen_ty, _) = generics.split_for_impl();
     let gen_ty = quote!(#gen_ty);

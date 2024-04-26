@@ -18,6 +18,7 @@ pub mod inline;
 pub mod insert;
 pub mod kind;
 pub mod path_identifier;
+pub mod reverse_id;
 
 /// Collection of items in a registry
 pub type ItemCollection<T> = SlabMap<ItemId, RegistryEntry<T>>;

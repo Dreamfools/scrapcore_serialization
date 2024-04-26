@@ -90,7 +90,7 @@ pub fn process_enum(
                 let where_condition = variant
                     .config
                     .config
-                    .where_condition(&field.ty, &serialized_ty);
+                    .where_condition(&field.ty, &serialized_ty)?;
 
                 (serialized_variant, deserialization_match, where_condition)
             } else {
