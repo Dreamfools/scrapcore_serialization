@@ -7,7 +7,9 @@ use ahash::AHashMap;
 use slabmap::SlabMapId;
 
 use crate::registry::entry::{RegistryEntry, RegistryEntrySerialized};
-use crate::registry::{poison_on_err, MaybeRawItem, PartialCollectionHolder, PartialRegistry};
+use crate::registry::{
+    poison_on_err, CollectionItemId, MaybeRawItem, PartialCollectionHolder, PartialRegistry,
+};
 use crate::serialization::error::internal::InternalDeserializationError;
 use crate::serialization::error::{
     DeserializationError, DeserializationErrorKind, DeserializationErrorStackItem,
@@ -134,14 +136,14 @@ where
 }
 
 impl<'a, Registry: PartialCollectionHolder<Data>, Data: SerializationFallback>
-    DeserializeModel<SlabMapId<RegistryEntry<Data>>, Registry> for ItemIdRef<'a>
+    DeserializeModel<CollectionItemId<Data>, Registry> for ItemIdRef<'a>
 where
     Data::Fallback: DeserializeModel<Data, Registry>,
 {
     fn deserialize(
         self,
         registry: &mut Registry,
-    ) -> Result<SlabMapId<RegistryEntry<Data>>, DeserializationError<Registry>> {
+    ) -> Result<CollectionItemId<Data>, DeserializationError<Registry>> {
         poison_on_err(registry, |registry| {
             let items = registry.get_collection();
 
@@ -178,15 +180,14 @@ where
 }
 
 impl<Registry: PartialCollectionHolder<Data>, Data: SerializationFallback>
-    DeserializeModel<SlabMapId<RegistryEntry<Data>>, Registry>
-    for RegistryEntrySerialized<Data::Fallback>
+    DeserializeModel<CollectionItemId<Data>, Registry> for RegistryEntrySerialized<Data::Fallback>
 where
     Data::Fallback: DeserializeModel<Data, Registry>,
 {
     fn deserialize(
         self,
         registry: &mut Registry,
-    ) -> Result<SlabMapId<RegistryEntry<Data>>, DeserializationError<Registry>> {
+    ) -> Result<CollectionItemId<Data>, DeserializationError<Registry>> {
         poison_on_err(registry, |registry| {
             let items = registry.get_collection();
 

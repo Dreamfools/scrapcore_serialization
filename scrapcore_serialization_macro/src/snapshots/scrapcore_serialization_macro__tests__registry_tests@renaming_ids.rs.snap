@@ -1,35 +1,45 @@
 ---
 source: scrapcore_serialization_macro/src/tests.rs
 expression: check_registry(path)
-input_file: scrapcore_serialization_macro/src/test_cases/registry/simple_registry.rs
+input_file: scrapcore_serialization_macro/src/test_cases/registry/renaming_ids.rs
 ---
 #[registry(error = ModelError)]
 pub struct Model {
-    #[model(collection)]
+    #[model(collection, id_name = ATestId)]
     test: A,
-    #[model(singleton)]
-    test_single: B,
-    #[model(asset)]
-    test_asset: Option<A>,
+    #[model(collection, id_name = SomethingElse)]
+    test2: B,
+    #[model(collection)]
+    test3: C1,
 }
 #[derive(Debug)]
 pub enum ModelItem {
-    TestSingle(B),
     Test(A),
+    Test2(B),
+    Test3(C1),
 }
-pub type TestId = scrapcore_serialization::registry::CollectionItemId<A>;
+pub type ATestId = scrapcore_serialization::registry::CollectionItemId<A>;
+pub type SomethingElse = scrapcore_serialization::registry::CollectionItemId<B>;
+pub type Test3Id = scrapcore_serialization::registry::CollectionItemId<C1>;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[derive(schemars::JsonSchema)]
 #[serde(tag = "type")]
 #[serde(rename_all = "PascalCase")]
 #[serde(rename = "ModelItem")]
 pub enum ModelItemSerialized {
-    TestSingle(
-        <B as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
-    ),
     Test(
         scrapcore_serialization::registry::entry::RegistryEntrySerialized<
             <A as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+        >,
+    ),
+    Test2(
+        scrapcore_serialization::registry::entry::RegistryEntrySerialized<
+            <B as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+        >,
+    ),
+    Test3(
+        scrapcore_serialization::registry::entry::RegistryEntrySerialized<
+            <C1 as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
         >,
     ),
 }
@@ -37,36 +47,28 @@ pub enum ModelItemSerialized {
 #[derive(schemars::JsonSchema)]
 #[serde(rename_all = "PascalCase")]
 pub enum ModelItemKind {
-    TestSingle,
     Test,
+    Test2,
+    Test3,
 }
 #[automatically_derived]
 impl std::fmt::Display for ModelItemKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
-            f, "{}", match self { ModelItemKind::TestSingle => stringify!(TestSingle),
-            ModelItemKind::Test => stringify!(Test), }
+            f, "{}", match self { ModelItemKind::Test => stringify!(Test),
+            ModelItemKind::Test2 => stringify!(Test2), ModelItemKind::Test3 =>
+            stringify!(Test3), }
         )
     }
 }
 #[derive(Debug, Copy, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[derive(schemars::JsonSchema)]
 #[serde(rename_all = "PascalCase")]
-pub enum ModelAssetKind {
-    TestAsset,
-}
+pub enum ModelAssetKind {}
 #[automatically_derived]
 impl std::fmt::Display for ModelAssetKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f, "{}", match self { ModelAssetKind::TestAsset => stringify!(TestAsset), }
-        )
-    }
-}
-#[automatically_derived]
-impl scrapcore_serialization::registry::kind::ItemKindProvider<B> for ModelRegistry {
-    fn kind() -> Self::ItemKind {
-        ModelItemKind::TestSingle
+        unreachable!()
     }
 }
 #[automatically_derived]
@@ -76,17 +78,15 @@ impl scrapcore_serialization::registry::kind::ItemKindProvider<A> for ModelRegis
     }
 }
 #[automatically_derived]
-impl scrapcore_serialization::registry::kind::AssetKindProvider<Option<A>>
-for ModelRegistry {
-    fn asset_kind() -> Self::AssetKind {
-        ModelAssetKind::TestAsset
+impl scrapcore_serialization::registry::kind::ItemKindProvider<B> for ModelRegistry {
+    fn kind() -> Self::ItemKind {
+        ModelItemKind::Test2
     }
 }
 #[automatically_derived]
-impl scrapcore_serialization::registry::kind::ItemKindProvider<B>
-for PartialModelRegistry {
+impl scrapcore_serialization::registry::kind::ItemKindProvider<C1> for ModelRegistry {
     fn kind() -> Self::ItemKind {
-        ModelItemKind::TestSingle
+        ModelItemKind::Test3
     }
 }
 #[automatically_derived]
@@ -97,44 +97,31 @@ for PartialModelRegistry {
     }
 }
 #[automatically_derived]
-impl scrapcore_serialization::registry::kind::AssetKindProvider<Option<A>>
+impl scrapcore_serialization::registry::kind::ItemKindProvider<B>
 for PartialModelRegistry {
-    fn asset_kind() -> Self::AssetKind {
-        ModelAssetKind::TestAsset
+    fn kind() -> Self::ItemKind {
+        ModelItemKind::Test2
+    }
+}
+#[automatically_derived]
+impl scrapcore_serialization::registry::kind::ItemKindProvider<C1>
+for PartialModelRegistry {
+    fn kind() -> Self::ItemKind {
+        ModelItemKind::Test3
     }
 }
 #[derive(Debug)]
 pub struct ModelRegistry {
-    test_single: scrapcore_serialization::registry::Singleton<B>,
     test: scrapcore_serialization::registry::ItemCollection<A>,
-    test_asset: scrapcore_serialization::registry::AssetsCollection<Option<A>>,
+    test2: scrapcore_serialization::registry::ItemCollection<B>,
+    test3: scrapcore_serialization::registry::ItemCollection<C1>,
 }
 #[derive(Debug, Default)]
 pub struct PartialModelRegistry {
     poisoned__: bool,
-    test_single: scrapcore_serialization::registry::PartialSingleton<B>,
     test: scrapcore_serialization::registry::PartialItemCollection<A>,
-    test_asset: scrapcore_serialization::registry::AssetsCollection<Option<A>>,
-}
-#[automatically_derived]
-impl scrapcore_serialization::registry::SingletonHolder<B> for ModelRegistry {
-    fn get_singleton(&self) -> &scrapcore_serialization::registry::Singleton<B> {
-        &self.test_single
-    }
-    fn get_singleton_mut(
-        &mut self,
-    ) -> &mut scrapcore_serialization::registry::Singleton<B> {
-        &mut self.test_single
-    }
-}
-#[automatically_derived]
-impl scrapcore_serialization::registry::PartialSingletonHolder<B>
-for PartialModelRegistry {
-    fn get_singleton(
-        &mut self,
-    ) -> &mut scrapcore_serialization::registry::PartialSingleton<B> {
-        &mut self.test_single
-    }
+    test2: scrapcore_serialization::registry::PartialItemCollection<B>,
+    test3: scrapcore_serialization::registry::PartialItemCollection<C1>,
 }
 #[automatically_derived]
 impl scrapcore_serialization::registry::CollectionHolder<A> for ModelRegistry {
@@ -157,16 +144,43 @@ for PartialModelRegistry {
     }
 }
 #[automatically_derived]
-impl scrapcore_serialization::registry::AssetsHolder<Option<A>> for ModelRegistry {
-    fn get_assets(
-        &self,
-    ) -> &scrapcore_serialization::registry::AssetsCollection<Option<A>> {
-        &self.test_asset
+impl scrapcore_serialization::registry::CollectionHolder<B> for ModelRegistry {
+    fn get_collection(&self) -> &scrapcore_serialization::registry::ItemCollection<B> {
+        &self.test2
     }
-    fn get_assets_mut(
+    fn get_collection_mut(
         &mut self,
-    ) -> &mut scrapcore_serialization::registry::AssetsCollection<Option<A>> {
-        &mut self.test_asset
+    ) -> &mut scrapcore_serialization::registry::ItemCollection<B> {
+        &mut self.test2
+    }
+}
+#[automatically_derived]
+impl scrapcore_serialization::registry::PartialCollectionHolder<B>
+for PartialModelRegistry {
+    fn get_collection(
+        &mut self,
+    ) -> &mut scrapcore_serialization::registry::PartialItemCollection<B> {
+        &mut self.test2
+    }
+}
+#[automatically_derived]
+impl scrapcore_serialization::registry::CollectionHolder<C1> for ModelRegistry {
+    fn get_collection(&self) -> &scrapcore_serialization::registry::ItemCollection<C1> {
+        &self.test3
+    }
+    fn get_collection_mut(
+        &mut self,
+    ) -> &mut scrapcore_serialization::registry::ItemCollection<C1> {
+        &mut self.test3
+    }
+}
+#[automatically_derived]
+impl scrapcore_serialization::registry::PartialCollectionHolder<C1>
+for PartialModelRegistry {
+    fn get_collection(
+        &mut self,
+    ) -> &mut scrapcore_serialization::registry::PartialItemCollection<C1> {
+        &mut self.test3
     }
 }
 #[automatically_derived]
@@ -203,23 +217,30 @@ impl PartialModelRegistry {
             A,
             PartialModelRegistry,
         >(&mut registry)?;
-        scrapcore_serialization::registry::finalize::process_raw_singleton::<
+        scrapcore_serialization::registry::finalize::process_raw_collection::<
             B,
+            PartialModelRegistry,
+        >(&mut registry)?;
+        scrapcore_serialization::registry::finalize::process_raw_collection::<
+            C1,
             PartialModelRegistry,
         >(&mut registry)?;
         let test = scrapcore_serialization::registry::finalize::convert_partial_collection::<
             A,
             PartialModelRegistry,
         >(registry.test)?;
-        let test_single = scrapcore_serialization::registry::finalize::convert_partial_singleton::<
+        let test2 = scrapcore_serialization::registry::finalize::convert_partial_collection::<
             B,
             PartialModelRegistry,
-        >(registry.test_single)?;
-        let test_asset = registry.test_asset;
+        >(registry.test2)?;
+        let test3 = scrapcore_serialization::registry::finalize::convert_partial_collection::<
+            C1,
+            PartialModelRegistry,
+        >(registry.test3)?;
         Ok(ModelRegistry {
             test,
-            test_single,
-            test_asset,
+            test2,
+            test3,
         })
     }
 }
@@ -245,9 +266,15 @@ impl PartialModelRegistry {
                     PartialModelRegistry,
                 >(registry, path, item)?
             }
-            ModelItemSerialized::TestSingle(item) => {
-                scrapcore_serialization::registry::insert::singleton_insert::<
+            ModelItemSerialized::Test2(item) => {
+                scrapcore_serialization::registry::insert::registry_insert::<
                     B,
+                    PartialModelRegistry,
+                >(registry, path, item)?
+            }
+            ModelItemSerialized::Test3(item) => {
+                scrapcore_serialization::registry::insert::registry_insert::<
+                    C1,
                     PartialModelRegistry,
                 >(registry, path, item)?
             }

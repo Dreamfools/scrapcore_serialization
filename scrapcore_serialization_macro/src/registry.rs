@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use itertools::Itertools;
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::{quote, quote_spanned};
+use quote::{format_ident, quote, quote_spanned};
 use syn::{parse_macro_input, ItemStruct, Type, Visibility};
 
 use crate::error::{tokens, MacroError};
@@ -26,6 +26,8 @@ struct ModelKind {
     field_name: Ident,
     /// Model name in PascalCase, for usage as enum variant name
     variant_name: Ident,
+    /// Name of the ID type for this model (only applies to collections)
+    id_name: Ident,
     ty: Type,
     ty_serialized: Type,
 }
@@ -97,9 +99,11 @@ pub(crate) fn registry_impl_inner(
     let impls = definitions.registry_impls();
     let finalize = definitions.partial_finalize();
     let insert_impl = definitions.insert_impl();
+    let item_ids = definitions.item_ids();
 
     Ok(quote! {
         #model
+        #item_ids
         #model_serialized
         #kind
         #kind_providers
@@ -112,6 +116,7 @@ pub(crate) fn registry_impl_inner(
 }
 
 impl RegistryDefinitions {
+    /// Definitions for serialized model enum
     fn model_serialized(&self) -> TokenStream {
         let reg = MOD_REGISTRY.deref();
         let collections =
@@ -151,15 +156,17 @@ impl RegistryDefinitions {
 
         model_enum
     }
+
+    /// Definitions for the model enum
     fn model(&self) -> TokenStream {
         let singletons = self.singletons.variants();
         let registries = self.collections.variants();
-        let serialized_model_name = &self.model_name;
+        let model_name = &self.model_name;
         let visibility = &self.visibility;
 
         let model_enum = quote! {
             #[derive(Debug)]
-            #visibility enum #serialized_model_name {
+            #visibility enum #model_name {
                 #(#singletons,)*
                 #(#registries,)*
             }
@@ -168,6 +175,7 @@ impl RegistryDefinitions {
         model_enum
     }
 
+    /// Definitions for "Kind" enums for assets and models
     fn kind(&self) -> TokenStream {
         fn kind_for(
             kind_name: &Ident,
@@ -227,6 +235,7 @@ impl RegistryDefinitions {
         }
     }
 
+    /// Kind provider implementations for registries
     fn kind_providers(&self) -> TokenStream {
         let Self {
             registry_name,
@@ -286,6 +295,7 @@ impl RegistryDefinitions {
         }
     }
 
+    /// Definitions for the registry struct
     fn registry(&self) -> TokenStream {
         let Self {
             registry_name,
@@ -342,6 +352,7 @@ impl RegistryDefinitions {
         }
     }
 
+    /// Definitions for the "partial" registry struct
     fn partial_registry(&self) -> TokenStream {
         let Self {
             partial_registry_name,
@@ -399,6 +410,7 @@ impl RegistryDefinitions {
         }
     }
 
+    /// Methods implementations for the registry structs
     fn registry_impls(&self) -> TokenStream {
         let Self {
             registry_name,
@@ -522,6 +534,7 @@ impl RegistryDefinitions {
         }
     }
 
+    /// Implementation for "finalize" method on partial registry
     fn partial_finalize(&self) -> TokenStream {
         let Self {
             registry_name,
@@ -602,6 +615,7 @@ impl RegistryDefinitions {
         }
     }
 
+    /// Implementation for model insertion method on partial registry
     fn insert_impl(&self) -> TokenStream {
         let Self {
             partial_registry_name,
@@ -640,6 +654,34 @@ impl RegistryDefinitions {
                     Ok(())
                 }
             }
+        }
+    }
+
+    /// Type aliases for item IDs
+    fn item_ids(&self) -> TokenStream {
+        let Self {
+            collections,
+            visibility,
+            ..
+        } = self;
+
+        let reg = MOD_REGISTRY.deref();
+        let entries = collections.iter().map(
+            |ModelKind {
+                 span,
+                 variant_name,
+                 ty,
+                 id_name,
+                ..
+             }| {
+                quote_spanned! {*span=>
+                    #visibility type #id_name = #reg::CollectionItemId<#ty>;
+                }
+            },
+        );
+
+        quote! {
+            #(#entries)*
         }
     }
 }

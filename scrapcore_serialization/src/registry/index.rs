@@ -1,7 +1,4 @@
-use slabmap::SlabMapId;
-
-use crate::registry::entry::RegistryEntry;
-use crate::registry::{CollectionHolder, SerializationRegistry};
+use crate::registry::{CollectionHolder, CollectionItemId, SerializationRegistry};
 
 /// Trait for things that can be used to fetch [Data] from the registry
 ///
@@ -16,7 +13,7 @@ pub trait RegistryIndex<Data> {
     ) -> &'a Data;
 }
 
-impl<Data> RegistryIndex<Data> for SlabMapId<RegistryEntry<Data>> {
+impl<Data> RegistryIndex<Data> for CollectionItemId<Data> {
     fn get<'a, Registry: SerializationRegistry + CollectionHolder<Data>>(
         &'a self,
         registry: &'a Registry,

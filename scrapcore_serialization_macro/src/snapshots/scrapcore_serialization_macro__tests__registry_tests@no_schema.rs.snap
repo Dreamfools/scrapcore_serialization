@@ -17,6 +17,7 @@ pub enum ModelItem {
     TestSingle(B),
     Test(A),
 }
+pub type TestId = scrapcore_serialization::registry::CollectionItemId<A>;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "PascalCase")]

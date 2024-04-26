@@ -46,6 +46,10 @@ struct ModelAttributeInput {
     collection: bool,
     #[attribute(conflicts=[asset, collection])]
     singleton: bool,
+
+    /// Name of the ID type for this model (only applies to collections)
+    #[attribute(conflicts=[asset, singleton])]
+    id_name: Option<Ident>,
 }
 pub(super) fn parse_struct_defs(
     attr: proc_macro2::TokenStream,
@@ -115,15 +119,17 @@ pub(super) fn parse_struct_defs(
                 ty: field.ty.clone(),
             });
         } else {
+            let variant_name = Ident::new(
+                &name
+                    .to_string()
+                    .from_case(Case::Snake)
+                    .to_case(Case::Pascal),
+                field.span(),
+            );
             let model = ModelKind {
                 span: field.span(),
-                variant_name: Ident::new(
-                    &name
-                        .to_string()
-                        .from_case(Case::Snake)
-                        .to_case(Case::Pascal),
-                    field.span(),
-                ),
+                id_name: attribute.id_name.unwrap_or_else(|| format_ident!("{}Id", variant_name)),
+                variant_name,
                 field_name: name,
                 ty: field.ty.clone(),
                 ty_serialized: serialized_of(&field.ty)?,

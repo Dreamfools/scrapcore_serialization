@@ -3,8 +3,6 @@ use crate::ItemId;
 use serde::{Deserialize, Serialize};
 use slabmap::SlabMapId;
 
-pub type RegistryId<T> = SlabMapId<RegistryEntry<T>>;
-
 /// Basic entry in a registry, this is how most of the items are stored
 #[derive(Debug, Clone)]
 pub struct RegistryEntry<Data> {

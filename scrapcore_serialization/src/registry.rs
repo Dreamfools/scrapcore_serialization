@@ -22,13 +22,16 @@ pub mod path_identifier;
 /// Collection of items in a registry
 pub type ItemCollection<T> = SlabMap<ItemId, RegistryEntry<T>>;
 
+/// Id of an item in the collection
+pub type CollectionItemId<T> = SlabMapId<RegistryEntry<T>>;
+
 /// Storage type for items in partial collection
 #[derive(Debug)]
 pub enum MaybeRawItem<T: SerializationFallback> {
     /// Raw serialized item
     Raw(RegistryEntrySerialized<T::Fallback>),
     /// Item that is currently in process of being deserialized
-    Reserved(SlabMapId<RegistryEntry<T>>),
+    Reserved(CollectionItemId<T>),
     /// Fully deserialized item
     Deserialized(RegistryEntry<T>),
 }

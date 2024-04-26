@@ -1,16 +1,14 @@
-use crate::registry::entry::RegistryEntry;
 use crate::registry::index::RegistryIndex;
-use crate::registry::{CollectionHolder, PartialRegistry, SerializationRegistry};
+use crate::registry::{CollectionHolder, CollectionItemId, PartialRegistry, SerializationRegistry};
 use crate::serialization::error::DeserializationError;
 use crate::serialization::{DeserializeModel, SerializationFallback};
 use crate::ItemId;
 use serde::{Deserialize, Serialize};
-use slabmap::SlabMapId;
 
 /// Item that can either be referenced by ID or have [Data] inline
 #[derive(Debug, Clone)]
 pub enum InlineOrId<Data> {
-    Id(SlabMapId<RegistryEntry<Data>>),
+    Id(CollectionItemId<Data>),
     Inline(Data),
 }
 
@@ -30,7 +28,7 @@ impl<Data: SerializationFallback> SerializationFallback for InlineOrId<Data> {
 impl<Registry: PartialRegistry, Data, DataSerialized: DeserializeModel<Data, Registry>>
     DeserializeModel<InlineOrId<Data>, Registry> for InlineOrIdSerialized<DataSerialized>
 where
-    for<'a> &'a str: DeserializeModel<SlabMapId<RegistryEntry<Data>>, Registry>,
+    for<'a> &'a str: DeserializeModel<CollectionItemId<Data>, Registry>,
 {
     fn deserialize(
         self,
