@@ -137,7 +137,7 @@ impl SharedAttributeConfig {
     fn where_condition(&self, original_type: &Type, serialized_type: &Type) -> Option<TokenStream> {
         let ser = MOD_SERIALIZATION.deref();
         let original_type = self.from.as_ref().unwrap_or(original_type);
-        (self.with.is_none() && !self.raw.is_present()).then(|| {
+        (!self.no_condition.is_present() && self.with.is_none() && !self.raw.is_present()).then(|| {
             quote! {
                 #serialized_type: #ser::DeserializeModel::<#original_type, Registry>
             }

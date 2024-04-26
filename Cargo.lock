@@ -1965,6 +1965,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "scrapcore_serialization_test"
+version = "0.1.0"
+dependencies = [
+ "schemars",
+ "scrapcore_serialization",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "walkdir",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.198"
 source = "registry+https://github.com/rust-lang/crates.io-index"

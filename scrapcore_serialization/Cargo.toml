@@ -14,6 +14,7 @@ schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 slabmap = { path = "../slabmap" }
 thiserror = { workspace = true }
+scrapcore_serialization_macro = { path = "../scrapcore_serialization_macro", optional = true }
 
 [dev-dependencies]
 schemars = { workspace = true }
@@ -22,3 +23,4 @@ scrapcore_serialization_macro = { path = "../scrapcore_serialization_macro" }
 [features]
 miette = ["dep:miette"]
 bevy = ["dep:bevy_asset"]
+derive = ["dep:scrapcore_serialization_macro"]

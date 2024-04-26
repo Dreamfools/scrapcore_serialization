@@ -51,6 +51,11 @@ pub struct SharedAttributeConfig {
     pub min: Option<Expr>,
     /// Applies max validator to the field
     pub max: Option<Expr>,
+
+    /// Skips generating `where` condition for this field
+    ///
+    /// Useful for avoiding recursion issues
+    pub no_condition: Flag,
 }
 
 /// Attribute fields for struct fields

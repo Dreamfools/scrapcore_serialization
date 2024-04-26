@@ -15,6 +15,8 @@ pub mod internal;
 
 #[derive(Debug, Error, Clone)]
 pub enum DeserializationErrorKind<Registry: SerializationRegistry> {
+    #[error("{}", .0)]
+    ParsingError(String),
     #[error("Item {}({}) is missing", .1, .0)]
     MissingItem(ItemId, Registry::ItemKind),
     #[error("Item {}({}) is declared twice, in `{}` and `{}`", .kind, .id, .path_a, .path_b)]

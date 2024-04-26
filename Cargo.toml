@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "scrapcore_serialization",
     "scrapcore_serialization_macro",
+    "scrapcore_serialization_tests",
     "slabmap",
 ]
 
@@ -27,6 +28,8 @@ serde = "1"
 slab = "0.4"
 syn = "2.0"
 thiserror = "1"
+walkdir = "2"
+serde_json = "1"
 
 [profile.release]
 opt-level = 3

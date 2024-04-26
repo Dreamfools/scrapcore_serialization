@@ -5,6 +5,11 @@ pub mod serialization;
 #[cfg(test)]
 mod test;
 
+#[cfg(feature = "derive")]
+pub mod derive {
+    pub use scrapcore_serialization_macro::*;
+}
+
 pub type ItemId = String;
 pub type ItemIdRef<'a> = &'a str;
 pub type AssetName = String;
