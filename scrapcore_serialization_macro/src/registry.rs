@@ -668,10 +668,7 @@ impl RegistryDefinitions {
         let reg = MOD_REGISTRY.deref();
         let entries = collections.iter().map(
             |ModelKind {
-                 span,
-                 ty,
-                 id_name,
-                ..
+                 span, ty, id_name, ..
              }| {
                 quote_spanned! {*span=>
                     #visibility type #id_name = #reg::CollectionItemId<#ty>;

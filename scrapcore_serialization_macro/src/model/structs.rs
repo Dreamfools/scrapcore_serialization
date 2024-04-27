@@ -173,7 +173,8 @@ pub fn process_struct(
          }| { config.where_condition(original_type, serialized_type) },
     );
 
-    let field_where_conditions = itertools::process_results(field_where_conditions, |i| i.flatten().collect_vec())?;
+    let field_where_conditions =
+        itertools::process_results(field_where_conditions, |i| i.flatten().collect_vec())?;
 
     let (_, gen_ty, _) = generics.split_for_impl();
     let gen_ty = quote!(#gen_ty);

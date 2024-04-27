@@ -134,31 +134,43 @@ impl SharedAttributeConfig {
         Ok(ty)
     }
 
-    fn where_condition(&self, original_type: &Type, serialized_type: &Type) -> Result<Option<TokenStream>, MacroError> {
+    fn where_condition(
+        &self,
+        original_type: &Type,
+        serialized_type: &Type,
+    ) -> Result<Option<TokenStream>, MacroError> {
         let ser = MOD_SERIALIZATION.deref();
         let reg = MOD_REGISTRY.deref();
         let original_type = self.from.as_ref().unwrap_or(original_type);
-        if (self.id.is_present() || self.id_of.is_some()) && (self.no_condition.is_present() || self.raw.is_present() || self.with.is_some()) {
+        if (self.id.is_present() || self.id_of.is_some())
+            && (self.no_condition.is_present() || self.raw.is_present() || self.with.is_some())
+        {
             bail!(Span::call_site(), "`id` and `id_of` attributes can not be used with `no_condition`, `with`, or `raw` attributes");
         }
         if self.id.is_present() {
             if self.id_of.is_some() {
-                bail!(self.id.span(), "`id` and `id_of` attributes can not be used together");
+                bail!(
+                    self.id.span(),
+                    "`id` and `id_of` attributes can not be used together"
+                );
             }
             return Ok(Some(quote! {
                 Registry: #reg::PartialCollectionHolder<<#original_type as #reg::reverse_id::ReverseId>::Item>
-            }))
+            }));
         } else if let Some(of) = &self.id_of {
             return Ok(Some(quote! {
                 Registry: #reg::PartialCollectionHolder<#of>
-            }))
+            }));
         }
 
-        Ok((!self.no_condition.is_present() && self.with.is_none() && !self.raw.is_present()).then(|| {
-            quote! {
-                #serialized_type: #ser::DeserializeModel::<#original_type, Registry>
-            }
-        }))
+        Ok(
+            (!self.no_condition.is_present() && self.with.is_none() && !self.raw.is_present())
+                .then(|| {
+                    quote! {
+                        #serialized_type: #ser::DeserializeModel::<#original_type, Registry>
+                    }
+                }),
+        )
     }
 
     fn deserialization_code(

@@ -1,9 +1,10 @@
+use scrapcore_serialization::derive::{registry, DatabaseModel};
+use scrapcore_serialization::serialization::error::{
+    DeserializationError, DeserializationErrorKind,
+};
 use std::path::Path;
 use thiserror::Error;
 use walkdir::WalkDir;
-use scrapcore_serialization::derive::{DatabaseModel, registry};
-use scrapcore_serialization::serialization::error::{DeserializationError, DeserializationErrorKind};
-use scrapcore_serialization::registry::PartialCollectionHolder;
 
 #[cfg(test)]
 mod tests;
@@ -19,7 +20,7 @@ struct Person {
 
 #[derive(Debug, DatabaseModel)]
 struct House {
-    residents: Vec<Person>
+    residents: Vec<Person>,
 }
 
 #[derive(Debug, DatabaseModel)]
@@ -38,7 +39,7 @@ enum Plot {
 #[registry(error = ModelError)]
 struct City {
     #[model(collection)]
-    person: Person
+    person: Person,
 }
 
 #[derive(Debug, Clone, Error)]
@@ -54,7 +55,10 @@ fn load_database(path: &Path) -> Result<CityRegistry, DeserializationError<Parti
 
         let data = std::fs::read(entry.path()).unwrap();
 
-        let data: CityItemSerialized = serde_json::from_slice(&data).map_err(|err|DeserializationErrorKind::<PartialCityRegistry>::ParsingError(err.to_string()).into_err())?;
+        let data: CityItemSerialized = serde_json::from_slice(&data).map_err(|err| {
+            DeserializationErrorKind::<PartialCityRegistry>::ParsingError(err.to_string())
+                .into_err()
+        })?;
         registry.insert(entry.path(), data)?;
     }
 

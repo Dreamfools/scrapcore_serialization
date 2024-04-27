@@ -128,7 +128,9 @@ pub(super) fn parse_struct_defs(
             );
             let model = ModelKind {
                 span: field.span(),
-                id_name: attribute.id_name.unwrap_or_else(|| format_ident!("{}Id", variant_name)),
+                id_name: attribute
+                    .id_name
+                    .unwrap_or_else(|| format_ident!("{}Id", variant_name)),
                 variant_name,
                 field_name: name,
                 ty: field.ty.clone(),
