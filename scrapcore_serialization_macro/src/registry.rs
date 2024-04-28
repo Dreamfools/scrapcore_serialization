@@ -143,20 +143,20 @@ impl RegistryDefinitions {
             self.collections.iter().map(
                 |ModelKind {
                      variant_name,
-                     ty_versioned: ty_serialized2,
+                     ty_versioned,
                      span,
                      ..
                  }| {
-                    quote_spanned!(*span=>#variant_name(#reg::entry::RegistryEntrySerialized<#ty_serialized2>))
+                    quote_spanned!(*span=>#variant_name(#reg::entry::RegistryEntrySerialized<#ty_versioned>))
                 },
             );
         let singletons = self.singletons.iter().map(
             |ModelKind {
                  variant_name,
-                 ty_versioned: ty_serialized2,
+                 ty_versioned,
                  span,
                  ..
-             }| { quote_spanned!(*span=>#variant_name(#ty_serialized2)) },
+             }| { quote_spanned!(*span=>#variant_name(#ty_versioned)) },
         );
         let visibility = &self.visibility;
         let serialized_model_name = &self.serialized_model_name;
@@ -385,11 +385,12 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
+                 ty_versioned,
                  ty,
                  ..
              }| {
                 quote_spanned! {*span=>
-                    #field_name: #reg::PartialSingleton<#ty>,
+                    #field_name: #reg::PartialSingleton<#ty, #ty_versioned>,
                 }
             },
         );
@@ -397,12 +398,12 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned: ty_serialized2,
+                 ty_versioned,
                  ty,
                  ..
              }| {
                 quote_spanned! {*span=>
-                    #field_name: #reg::PartialItemCollection<#ty, #ty_serialized2>,
+                    #field_name: #reg::PartialItemCollection<#ty, #ty_versioned>,
                 }
             },
         );
@@ -448,6 +449,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
+                 ty_versioned,
                  ty,
                  ..
              }| {
@@ -464,7 +466,8 @@ impl RegistryDefinitions {
 
                     #[automatically_derived]
                     impl #reg::PartialSingletonHolder::<#ty> for #partial_registry_name {
-                        fn get_singleton(&mut self) -> &mut #reg::PartialSingleton<#ty> {
+                        type Serialized = #ty_versioned;
+                        fn get_singleton(&mut self) -> &mut #reg::PartialSingleton<#ty, #ty_versioned> {
                             &mut self.#field_name
                         }
                     }
@@ -476,7 +479,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned: ty_serialized2,
+                 ty_versioned,
                  ty,
                  ..
              }| {
@@ -493,9 +496,9 @@ impl RegistryDefinitions {
 
                     #[automatically_derived]
                     impl #reg::PartialCollectionHolder::<#ty> for #partial_registry_name {
-                        type Serialized = #ty_serialized2;
+                        type Serialized = #ty_versioned;
 
-                        fn get_collection(&mut self) -> &mut #reg::PartialItemCollection<#ty, #ty_serialized2> {
+                        fn get_collection(&mut self) -> &mut #reg::PartialItemCollection<#ty, #ty_versioned> {
                             &mut self.#field_name
                         }
                     }
@@ -574,7 +577,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned: _ty_serialized2,
+                 ty_versioned: _ty_versioned,
                  ty,
                 ..
              }| {
@@ -651,7 +654,7 @@ impl RegistryDefinitions {
         let reg = MOD_REGISTRY.deref();
         let err = MOD_ERRORS.deref();
 
-        let cols = collections.iter().map(|ModelKind{ span, variant_name, ty_versioned: _ty_serialized2, ty, .. }| {
+        let cols = collections.iter().map(|ModelKind{ span, variant_name, ty_versioned: _ty_versioned, ty, .. }| {
             quote_spanned! {*span=>
                 #serialized_model_name::#variant_name(item) => #reg::insert::registry_insert::<#ty, #partial_registry_name>(registry, path, item)?
             }
@@ -719,7 +722,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                 variant_name,
-                 ty_versioned: ty_serialized2,
+                 ty_versioned,
                  ty,
                  versioning,
                 ..
@@ -743,7 +746,7 @@ impl RegistryDefinitions {
                     let Version{ ty_serialized, version_variant, .. } = &versioning[0];
                     quote_spanned! {*span=>
                         #[automatically_derived]
-                        impl<Registry: #reg::PartialRegistry> #ser::DeserializeModel<#ty, Registry> for #ty_serialized2 where #ty_serialized: #ser::DeserializeModel<#ty, Registry> {
+                        impl<Registry: #reg::PartialRegistry> #ser::DeserializeModel<#ty, Registry> for #ty_versioned where #ty_serialized: #ser::DeserializeModel<#ty, Registry> {
                             fn deserialize(self, registry: &mut Registry) -> Result<#ty, DeserializationError<Registry>> {
                                 match self {
                                     Self::#version_variant(data) => data.deserialize(registry),
@@ -760,7 +763,7 @@ impl RegistryDefinitions {
                     #schema_derive
                     #[serde(rename = #rename)]
                     #[serde(tag = "version")]
-                    #visibility enum #ty_serialized2 {
+                    #visibility enum #ty_versioned {
                         #(#fields)*
                     }
 

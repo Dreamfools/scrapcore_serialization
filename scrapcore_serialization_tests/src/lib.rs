@@ -10,40 +10,49 @@ use walkdir::WalkDir;
 mod tests;
 
 #[derive(Debug, DatabaseModel)]
-struct Person {
-    name: String,
+pub struct Person {
+    pub name: String,
     #[model(id)]
-    mom: Option<PersonId>,
+    pub mom: Option<PersonId>,
     #[model(id)]
-    dad: Option<PersonId>,
+    pub dad: Option<PersonId>,
 }
 
 #[derive(Debug, DatabaseModel)]
-struct House {
-    residents: Vec<Person>,
+pub struct House {
+    pub residents: Vec<Person>,
 }
 
 #[derive(Debug, DatabaseModel)]
-struct Theater {
-    name: String,
-    seats: u32,
+pub struct Theater {
+    pub name: String,
+    pub seats: u32,
 }
 
 #[derive(Debug, DatabaseModel)]
-enum Plot {
+pub enum Plot {
     Empty,
     House(House),
     Theater(Theater),
 }
 
+#[derive(Debug, DatabaseModel)]
+pub struct Mayor {
+    pub person: PersonId,
+}
+
 #[registry(error = "ModelError")]
-enum City {
+pub enum City {
     #[model(collection)]
     Person(Person),
+    #[model(collection)]
+    Plot(Plot),
+    #[model(singleton)]
+    Mayor(Mayor),
 }
 
 #[derive(Debug, Clone, Error)]
-enum ModelError {}
+pub enum ModelError {}
 
 fn load_database(path: &Path) -> Result<CityRegistry, DeserializationError<PartialCityRegistry>> {
     let mut registry = PartialCityRegistry::default();

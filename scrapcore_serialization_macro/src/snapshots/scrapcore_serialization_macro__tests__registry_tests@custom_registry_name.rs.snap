@@ -160,7 +160,10 @@ pub struct CustomRegistry {
 #[derive(Debug, Default)]
 pub struct PartialCustomRegistry {
     poisoned__: bool,
-    test_single: scrapcore_serialization::registry::PartialSingleton<B>,
+    test_single: scrapcore_serialization::registry::PartialSingleton<
+        B,
+        VersionedTestSingle,
+    >,
     test: scrapcore_serialization::registry::PartialItemCollection<A, VersionedTest>,
     test_asset: scrapcore_serialization::registry::AssetsCollection<Option<A>>,
 }
@@ -178,9 +181,13 @@ impl scrapcore_serialization::registry::SingletonHolder<B> for CustomRegistry {
 #[automatically_derived]
 impl scrapcore_serialization::registry::PartialSingletonHolder<B>
 for PartialCustomRegistry {
+    type Serialized = VersionedTestSingle;
     fn get_singleton(
         &mut self,
-    ) -> &mut scrapcore_serialization::registry::PartialSingleton<B> {
+    ) -> &mut scrapcore_serialization::registry::PartialSingleton<
+        B,
+        VersionedTestSingle,
+    > {
         &mut self.test_single
     }
 }

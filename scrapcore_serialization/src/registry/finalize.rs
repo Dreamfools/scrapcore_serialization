@@ -109,8 +109,8 @@ where
 }
 
 /// Convert partial collection into item collection
-pub fn convert_partial_singleton<T: SerializationFallback, Registry: ItemKindProvider<T>>(
-    raw: PartialSingleton<T>,
+pub fn convert_partial_singleton<T, Registry: ItemKindProvider<T> + PartialSingletonHolder<T>>(
+    raw: PartialSingleton<T, Registry::Serialized>,
 ) -> Result<Singleton<T>, InternalDeserializationError<Registry>> {
     match raw {
         None => Err(InternalDeserializationError::ConversionMissingSingleton(

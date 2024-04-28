@@ -8,7 +8,7 @@ use crate::registry::kind::{AssetKindProvider, ItemKindProvider};
 use crate::registry::path_identifier::PathIdentifier;
 use crate::serialization::error::internal::InternalDeserializationError;
 use crate::serialization::error::DeserializationError;
-use crate::serialization::{DeserializeModel, SerializationFallback};
+use crate::serialization::DeserializeModel;
 use crate::{AssetName, ItemId};
 
 pub mod entry;
@@ -46,12 +46,13 @@ pub type PartialItemCollection<T, Serialized> =
 pub type Singleton<T> = T;
 
 #[derive(Debug)]
-pub enum MaybeRawSingleton<T: SerializationFallback> {
-    Raw(T::Fallback),
+pub enum MaybeRawSingleton<T, Serialized> {
+    Raw(Serialized),
     Deserialized(Singleton<T>),
 }
 /// Singleton item in a "partial" registry
-pub type PartialSingleton<T> = Option<(PathIdentifier, MaybeRawSingleton<T>)>;
+pub type PartialSingleton<T, Serialized> =
+    Option<(PathIdentifier, MaybeRawSingleton<T, Serialized>)>;
 
 /// Collection of assets in a registry
 pub type AssetsCollection<T> = AHashMap<AssetName, (T, PathIdentifier)>;
@@ -77,11 +78,10 @@ pub trait PartialCollectionHolder<Value>:
 }
 
 /// Trait for "partial" registries used during deserialization
-pub trait PartialSingletonHolder<Value: SerializationFallback>:
-    PartialRegistry + ItemKindProvider<Value>
-{
+pub trait PartialSingletonHolder<Value>: PartialRegistry + ItemKindProvider<Value> + Sized {
+    type Serialized: DeserializeModel<Value, Self>;
     // &mut Option usage is intentional so None can be replaced with Some
-    fn get_singleton(&mut self) -> &mut PartialSingleton<Value>;
+    fn get_singleton(&mut self) -> &mut PartialSingleton<Value, Self::Serialized>;
 }
 
 /// Registry trait for assets

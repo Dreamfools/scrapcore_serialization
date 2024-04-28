@@ -41,10 +41,10 @@ pub fn registry_insert<T: SerializationFallback, Registry: PartialCollectionHold
 
 /// Insert a raw singleton into a registry, returning an error if singleton of
 /// the same type is already added
-pub fn singleton_insert<T: SerializationFallback, Registry: PartialSingletonHolder<T>>(
+pub fn singleton_insert<T, Registry: PartialSingletonHolder<T>>(
     registry: &mut Registry,
     path: impl Into<PathIdentifier>,
-    item: T::Fallback,
+    item: Registry::Serialized,
 ) -> Result<(), DeserializationError<Registry>> {
     poison_on_err(registry, |registry| {
         let path = path.into();

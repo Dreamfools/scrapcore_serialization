@@ -84,7 +84,10 @@ pub struct ModelRegistry {
 #[derive(Debug, Default)]
 pub struct PartialModelRegistry {
     poisoned__: bool,
-    test_versioning: scrapcore_serialization::registry::PartialSingleton<B>,
+    test_versioning: scrapcore_serialization::registry::PartialSingleton<
+        B,
+        VersionedTestVersioning,
+    >,
 }
 #[automatically_derived]
 impl scrapcore_serialization::registry::SingletonHolder<B> for ModelRegistry {
@@ -100,9 +103,13 @@ impl scrapcore_serialization::registry::SingletonHolder<B> for ModelRegistry {
 #[automatically_derived]
 impl scrapcore_serialization::registry::PartialSingletonHolder<B>
 for PartialModelRegistry {
+    type Serialized = VersionedTestVersioning;
     fn get_singleton(
         &mut self,
-    ) -> &mut scrapcore_serialization::registry::PartialSingleton<B> {
+    ) -> &mut scrapcore_serialization::registry::PartialSingleton<
+        B,
+        VersionedTestVersioning,
+    > {
         &mut self.test_versioning
     }
 }

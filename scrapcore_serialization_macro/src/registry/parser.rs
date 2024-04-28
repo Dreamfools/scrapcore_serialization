@@ -102,14 +102,18 @@ pub(super) fn parse_struct_defs(
     let input = RegistryAttributeInput::from_list(&NestedMeta::parse_meta_list(attr)?)?;
     let body = RegistryAttributeDeriveInput::from_derive_input(data)?;
 
+    if !body.generics.params.is_empty() {
+        bail!(body.generics.span(), "Generic registries are not supported")
+    }
+
     strip_attrs(data);
 
     let registry_item_name = input
         .item_name
-        .unwrap_or_else(|| format_ident!("{}Item", data.ident));
+        .unwrap_or_else(|| format_ident!("{}Item", body.ident));
     let registry_name = input
         .registry_name
-        .unwrap_or_else(|| format_ident!("{}Registry", data.ident));
+        .unwrap_or_else(|| format_ident!("{}Registry", body.ident));
     let partial_registry_name = input
         .partial_registry_name
         .unwrap_or_else(|| format_ident!("Partial{}", registry_name));
@@ -121,7 +125,7 @@ pub(super) fn parse_struct_defs(
         .unwrap_or_else(|| format_ident!("{}Kind", registry_item_name));
     let assets_kind_name = input
         .assets_kind_name
-        .unwrap_or_else(|| format_ident!("{}AssetKind", data.ident));
+        .unwrap_or_else(|| format_ident!("{}AssetKind", body.ident));
 
     let visibility = input.visibility.unwrap_or_else(|| body.vis.clone());
 
