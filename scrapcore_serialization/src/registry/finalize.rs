@@ -38,8 +38,8 @@ where
 }
 
 /// Convert partial collection into item collection
-pub fn convert_partial_collection<T: SerializationFallback, Registry: ItemKindProvider<T>>(
-    raw: PartialItemCollection<T>,
+pub fn convert_partial_collection<T, Registry: ItemKindProvider<T> + PartialCollectionHolder<T>>(
+    raw: PartialItemCollection<T, Registry::Serialized>,
 ) -> Result<ItemCollection<T>, InternalDeserializationError<Registry>> {
     let mut out: ItemCollection<T> = Default::default();
     for (key, id, (_, value)) in raw.into_iter().sorted_by_key(|(_, id, _)| *id) {

@@ -1,5 +1,5 @@
-#[registry(error = ModelError)]
-pub struct Model {
+#[registry(error = "ModelError")]
+pub enum Model {
     #[model(asset, collection)]
-    test: A,
+    Test(A),
 }

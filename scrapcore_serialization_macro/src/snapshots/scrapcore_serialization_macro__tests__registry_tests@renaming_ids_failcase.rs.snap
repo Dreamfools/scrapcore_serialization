@@ -3,11 +3,11 @@ source: scrapcore_serialization_macro/src/tests.rs
 expression: check_registry(path)
 input_file: scrapcore_serialization_macro/src/test_cases/registry/renaming_ids_failcase.rs
 ---
-#[registry(error = ModelError)]
-pub struct Model {
+#[registry(error = "ModelError")]
+pub enum Model {
     #[model(singleton, id_name = ATestId)]
-    test: A,
+    test(A),
 }
 ::core::compile_error! {
-    "`id_name` conflicts with mutually exclusive `singleton`"
+    "`id_name` attribute can only be used with `collection` marker"
 }

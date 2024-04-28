@@ -26,8 +26,6 @@ pub mod helpers;
 pub mod primitives;
 pub mod string;
 
-pub mod migrate;
-
 #[cfg(feature = "bevy")]
 pub mod bevy;
 
@@ -136,10 +134,8 @@ where
     }
 }
 
-impl<'a, Registry: PartialCollectionHolder<Data>, Data: SerializationFallback>
+impl<'a, Registry: PartialCollectionHolder<Data>, Data>
     DeserializeModel<CollectionItemId<Data>, Registry> for ItemIdRef<'a>
-where
-    Data::Fallback: DeserializeModel<Data, Registry>,
 {
     fn deserialize(
         self,
@@ -180,10 +176,9 @@ where
     }
 }
 
-impl<Registry: PartialCollectionHolder<Data>, Data: SerializationFallback>
-    DeserializeModel<CollectionItemId<Data>, Registry> for RegistryEntrySerialized<Data::Fallback>
-where
-    Data::Fallback: DeserializeModel<Data, Registry>,
+impl<Registry: PartialCollectionHolder<Data>, Data>
+    DeserializeModel<CollectionItemId<Data>, Registry>
+    for RegistryEntrySerialized<Registry::Serialized>
 {
     fn deserialize(
         self,

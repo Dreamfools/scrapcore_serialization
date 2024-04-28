@@ -1,9 +1,9 @@
-#[registry(error = ModelError, serialized_item_name = CustomSerializedItemName)]
-pub struct Model {
+#[registry(error = "ModelError", serialized_item_name = CustomSerializedItemName)]
+pub enum Model {
     #[model(collection)]
-    test: A,
+    Test(A),
     #[model(singleton)]
-    test_single: B,
+    TestSingle(B),
     #[model(asset)]
-    test_asset: Option<A>,
+    TestAsset(Option<A>),
 }

@@ -1,9 +1,9 @@
-#[registry(error = ModelError)]
-pub struct Model {
+#[registry(error = "ModelError")]
+pub enum Model {
     #[model(collection, id_name = ATestId)]
-    test: A,
+    Test(A),
     #[model(collection, id_name = SomethingElse)]
-    test2: B,
-    #[model(collection)]
-    test3: C1,
+    TestSingle(B),
+    #[model(asset)]
+    TestAsset(Option<A>),
 }

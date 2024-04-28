@@ -1,5 +1,5 @@
-#[registry(error = ModelError)]
-pub struct Model {
+#[registry(error = "ModelError")]
+pub enum Model {
     #[model(singleton, id_name = ATestId)]
-    test: A,
+    test(A),
 }

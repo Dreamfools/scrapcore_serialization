@@ -1,4 +1,4 @@
-#[registry(error = "ModelError", partial_registry_name = CustomPartialRegistry)]
+#[registry(error = "ModelError", vis = "")]
 pub enum Model {
     #[model(collection)]
     Test(A),

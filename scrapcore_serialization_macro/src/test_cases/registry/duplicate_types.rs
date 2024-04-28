@@ -1,7 +1,7 @@
-#[registry(error = ModelError, no_schema)]
-pub struct Model {
+#[registry(error = "ModelError", no_schema)]
+pub enum Model {
     #[model(collection)]
-    test1: A,
+    Test1(A),
     #[model(singleton)]
-    test2: A,
+    Test2(A),
 }

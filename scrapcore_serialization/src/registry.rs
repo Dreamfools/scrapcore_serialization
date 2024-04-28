@@ -8,7 +8,7 @@ use crate::registry::kind::{AssetKindProvider, ItemKindProvider};
 use crate::registry::path_identifier::PathIdentifier;
 use crate::serialization::error::internal::InternalDeserializationError;
 use crate::serialization::error::DeserializationError;
-use crate::serialization::SerializationFallback;
+use crate::serialization::{DeserializeModel, SerializationFallback};
 use crate::{AssetName, ItemId};
 
 pub mod entry;
@@ -28,9 +28,9 @@ pub type CollectionItemId<T> = SlabMapId<RegistryEntry<T>>;
 
 /// Storage type for items in partial collection
 #[derive(Debug)]
-pub enum MaybeRawItem<T: SerializationFallback> {
+pub enum MaybeRawItem<T, Serialized> {
     /// Raw serialized item
-    Raw(RegistryEntrySerialized<T::Fallback>),
+    Raw(RegistryEntrySerialized<Serialized>),
     /// Item that is currently in process of being deserialized
     Reserved(CollectionItemId<T>),
     /// Fully deserialized item
@@ -39,7 +39,8 @@ pub enum MaybeRawItem<T: SerializationFallback> {
 
 /// Collection of items in a "partial" registry, with some items having IDs
 /// assigned but not yet filled with an actual data
-pub type PartialItemCollection<T> = SlabMap<ItemId, (PathIdentifier, MaybeRawItem<T>)>;
+pub type PartialItemCollection<T, Serialized> =
+    SlabMap<ItemId, (PathIdentifier, MaybeRawItem<T, Serialized>)>;
 
 /// Singleton item in a registry
 pub type Singleton<T> = T;
@@ -68,10 +69,11 @@ pub trait SingletonHolder<Value>: SerializationRegistry + ItemKindProvider<Value
 }
 
 /// Trait for "partial" registries used during deserialization
-pub trait PartialCollectionHolder<Value: SerializationFallback>:
-    PartialRegistry + ItemKindProvider<Value>
+pub trait PartialCollectionHolder<Value>:
+    PartialRegistry + ItemKindProvider<Value> + Sized
 {
-    fn get_collection(&mut self) -> &mut PartialItemCollection<Value>;
+    type Serialized: DeserializeModel<Value, Self>;
+    fn get_collection(&mut self) -> &mut PartialItemCollection<Value, Self::Serialized>;
 }
 
 /// Trait for "partial" registries used during deserialization

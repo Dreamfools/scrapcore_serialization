@@ -1,9 +1,9 @@
-#[registry(error = ModelError, item_kind_name = CustomKind)]
-pub struct Model {
+#[registry(error = "ModelError", item_kind_name = CustomKind)]
+pub enum Model {
     #[model(collection)]
-    test: A,
+    Test(A),
     #[model(singleton)]
-    test_single: B,
+    TestSingle(B),
     #[model(asset)]
-    test_asset: Option<A>,
+    TestAsset(Option<A>),
 }

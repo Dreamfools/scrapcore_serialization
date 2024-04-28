@@ -3,11 +3,11 @@ source: scrapcore_serialization_macro/src/tests.rs
 expression: check_registry(path)
 input_file: scrapcore_serialization_macro/src/test_cases/registry/conflict_singleton_asset.rs
 ---
-#[registry(error = ModelError)]
-pub struct Model {
+#[registry(error = "ModelError")]
+pub enum Model {
     #[model(singleton, asset)]
-    test: A,
+    Test(A),
 }
 ::core::compile_error! {
-    "`asset` conflicts with mutually exclusive `singleton`"
+    "Only one of `asset`, `collection`, or `singleton` markers can be present at once"
 }
