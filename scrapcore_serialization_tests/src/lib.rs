@@ -36,10 +36,10 @@ enum Plot {
     Theater(Theater),
 }
 
-#[registry(error = ModelError)]
-struct City {
+#[registry(error = "ModelError")]
+enum City {
     #[model(collection)]
-    person: Person,
+    Person(Person),
 }
 
 #[derive(Debug, Clone, Error)]

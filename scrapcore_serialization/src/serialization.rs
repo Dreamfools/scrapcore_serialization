@@ -24,8 +24,9 @@ pub mod min_max;
 pub mod helpers;
 
 pub mod primitives;
-
 pub mod string;
+
+pub mod migrate;
 
 #[cfg(feature = "bevy")]
 pub mod bevy;

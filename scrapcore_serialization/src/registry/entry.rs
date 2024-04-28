@@ -1,3 +1,6 @@
+use crate::registry::SerializationRegistry;
+use crate::serialization::error::DeserializationError;
+use crate::serialization::migrate::Migrate;
 use crate::serialization::SerializationFallback;
 use crate::ItemId;
 use serde::{Deserialize, Serialize};
@@ -26,5 +29,19 @@ impl<Data: SerializationFallback> SerializationFallback for RegistryEntry<Data> 
 impl<Data> AsRef<Data> for RegistryEntry<Data> {
     fn as_ref(&self) -> &Data {
         &self.data
+    }
+}
+
+impl<Registry: SerializationRegistry, T, V: Migrate<T, Registry>>
+    Migrate<RegistryEntrySerialized<T>, Registry> for RegistryEntrySerialized<V>
+{
+    fn migrate(
+        self,
+        registry: &mut Registry,
+    ) -> Result<RegistryEntrySerialized<T>, DeserializationError<Registry>> {
+        Ok(RegistryEntrySerialized {
+            id: self.id,
+            data: self.data.migrate(registry)?,
+        })
     }
 }

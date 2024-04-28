@@ -2,9 +2,6 @@ pub mod registry;
 
 pub mod serialization;
 
-#[cfg(test)]
-mod test;
-
 #[cfg(feature = "derive")]
 pub mod derive {
     pub use scrapcore_serialization_macro::*;

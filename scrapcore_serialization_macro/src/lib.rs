@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use std::fmt::Display;
 use std::ops::Deref;
 
-use crate::error::{tokens, MacroError};
+use crate::error::tokens;
 use lazy_static::lazy_static;
 use quote::{quote, ToTokens};
 
@@ -59,11 +59,17 @@ fn crate_name(name: &str) -> IdentSync {
     }
 }
 
-fn serialized_of(ty: &Type) -> Result<Type, MacroError> {
+fn serialized_of(ty: &Type) -> Type {
     let ser = MOD_SERIALIZATION.deref();
-    Ok(syn::parse2(quote! {
+    syn::parse2(quote! {
         <#ty as #ser::SerializationFallback>::Fallback
-    })?)
+    })
+    .unwrap_or_else(|err| {
+        panic!(
+            "Failed to generate serialized specification for the type `{:?}`: {}",
+            ty, err
+        )
+    })
 }
 
 #[proc_macro_derive(DatabaseModel, attributes(model, model_attr, model_serde))]

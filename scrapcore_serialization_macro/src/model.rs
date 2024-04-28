@@ -128,7 +128,7 @@ impl SharedAttributeConfig {
         } else if let Some(ty) = &self.custom_ty {
             Cow::Borrowed(ty)
         } else {
-            Cow::Owned(serialized_of(field_ty)?)
+            Cow::Owned(serialized_of(field_ty))
         };
 
         Ok(ty)

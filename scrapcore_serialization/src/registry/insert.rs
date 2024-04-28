@@ -9,16 +9,22 @@ use crate::registry::{
 use crate::serialization::error::{
     DeserializationError, DeserializationErrorKind, DeserializationErrorStackItem,
 };
+use crate::serialization::migrate::Migrate;
 use crate::serialization::SerializationFallback;
 
 /// Insert a raw item into a registry, returning an error if the item with the
 /// same ID is already added
-pub fn registry_insert<T: SerializationFallback, Registry: PartialCollectionHolder<T>>(
+pub fn registry_insert<
+    T: SerializationFallback,
+    V: Migrate<T::Fallback, Registry>,
+    Registry: PartialCollectionHolder<T>,
+>(
     registry: &mut Registry,
     path: impl Into<PathIdentifier>,
-    item: RegistryEntrySerialized<T::Fallback>,
+    item: RegistryEntrySerialized<V>,
 ) -> Result<(), DeserializationError<Registry>> {
     poison_on_err(registry, |registry| {
+        let item = item.migrate(registry)?;
         let path = path.into();
         let raw = registry.get_collection();
         if let Some(entry) = raw.get_by_key(&item.id) {
