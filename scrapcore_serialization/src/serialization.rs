@@ -29,6 +29,9 @@ pub mod string;
 #[cfg(feature = "bevy")]
 pub mod bevy;
 
+#[cfg(feature = "miniquad")]
+pub mod miniquad;
+
 pub use min_max::ApplyMax;
 pub use min_max::ApplyMin;
 

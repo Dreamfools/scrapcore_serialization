@@ -30,6 +30,7 @@ syn = "2.0"
 thiserror = "1"
 walkdir = "2"
 serde_json = "1"
+miniquad = "0.4"
 
 [profile.release]
 opt-level = 3
