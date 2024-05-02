@@ -520,6 +520,17 @@ impl RegistryDefinitions {
                             &mut self.#field_name
                         }
                     }
+
+                    #[automatically_derived]
+                    impl #reg::AssetsHolder::<#ty> for #partial_registry_name {
+                        fn get_assets(&self) -> &#reg::AssetsCollection<#ty> {
+                            &self.#field_name
+                        }
+
+                        fn get_assets_mut(&mut self) -> &mut #reg::AssetsCollection<#ty> {
+                            &mut self.#field_name
+                        }
+                    }
                 }
             },
         );

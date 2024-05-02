@@ -181,6 +181,20 @@ impl scrapcore_serialization::registry::AssetsHolder<Option<A>> for ModelRegistr
     }
 }
 #[automatically_derived]
+impl scrapcore_serialization::registry::AssetsHolder<Option<A>>
+for PartialModelRegistry {
+    fn get_assets(
+        &self,
+    ) -> &scrapcore_serialization::registry::AssetsCollection<Option<A>> {
+        &self.test_asset
+    }
+    fn get_assets_mut(
+        &mut self,
+    ) -> &mut scrapcore_serialization::registry::AssetsCollection<Option<A>> {
+        &mut self.test_asset
+    }
+}
+#[automatically_derived]
 impl scrapcore_serialization::registry::SerializationRegistry for ModelRegistry {
     type ItemKind = ModelItemKind;
     type AssetKind = ModelAssetKind;

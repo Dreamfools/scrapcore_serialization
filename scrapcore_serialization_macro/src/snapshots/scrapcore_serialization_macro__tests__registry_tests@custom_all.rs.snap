@@ -187,6 +187,20 @@ impl scrapcore_serialization::registry::AssetsHolder<Option<A>> for CustomRegist
     }
 }
 #[automatically_derived]
+impl scrapcore_serialization::registry::AssetsHolder<Option<A>>
+for CustomPartialRegistry {
+    fn get_assets(
+        &self,
+    ) -> &scrapcore_serialization::registry::AssetsCollection<Option<A>> {
+        &self.test_asset
+    }
+    fn get_assets_mut(
+        &mut self,
+    ) -> &mut scrapcore_serialization::registry::AssetsCollection<Option<A>> {
+        &mut self.test_asset
+    }
+}
+#[automatically_derived]
 impl scrapcore_serialization::registry::SerializationRegistry for CustomRegistry {
     type ItemKind = CustomKind;
     type AssetKind = CustomAsset;
