@@ -17,61 +17,6 @@ pub enum ModelItem {
     Test(A),
     TestSingle(B),
 }
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[derive(schemars::JsonSchema)]
-#[serde(rename = "Test")]
-#[serde(tag = "version")]
-pub enum VersionedTest {
-    #[serde(rename = "1")]
-    V1(<A as scrapcore_serialization::serialization::SerializationFallback>::Fallback),
-}
-#[automatically_derived]
-impl<
-    Registry: scrapcore_serialization::registry::PartialRegistry,
-> scrapcore_serialization::serialization::DeserializeModel<A, Registry> for VersionedTest
-where
-    <A as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
-        A,
-        Registry,
-    >,
-{
-    fn deserialize(
-        self,
-        registry: &mut Registry,
-    ) -> Result<A, DeserializationError<Registry>> {
-        match self {
-            Self::V1(data) => data.deserialize(registry),
-        }
-    }
-}
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[derive(schemars::JsonSchema)]
-#[serde(rename = "TestSingle")]
-#[serde(tag = "version")]
-pub enum VersionedTestSingle {
-    #[serde(rename = "1")]
-    V1(<B as scrapcore_serialization::serialization::SerializationFallback>::Fallback),
-}
-#[automatically_derived]
-impl<
-    Registry: scrapcore_serialization::registry::PartialRegistry,
-> scrapcore_serialization::serialization::DeserializeModel<B, Registry>
-for VersionedTestSingle
-where
-    <B as scrapcore_serialization::serialization::SerializationFallback>::Fallback: scrapcore_serialization::serialization::DeserializeModel<
-        B,
-        Registry,
-    >,
-{
-    fn deserialize(
-        self,
-        registry: &mut Registry,
-    ) -> Result<B, DeserializationError<Registry>> {
-        match self {
-            Self::V1(data) => data.deserialize(registry),
-        }
-    }
-}
 pub type ATestId = scrapcore_serialization::registry::CollectionItemId<A>;
 pub type SomethingElse = scrapcore_serialization::registry::CollectionItemId<B>;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -80,11 +25,13 @@ pub type SomethingElse = scrapcore_serialization::registry::CollectionItemId<B>;
 #[serde(rename = "ModelItem")]
 pub enum ModelItemSerialized {
     Test(
-        scrapcore_serialization::registry::entry::RegistryEntrySerialized<VersionedTest>,
+        scrapcore_serialization::registry::entry::RegistryEntrySerialized<
+            <A as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+        >,
     ),
     TestSingle(
         scrapcore_serialization::registry::entry::RegistryEntrySerialized<
-            VersionedTestSingle,
+            <B as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
         >,
     ),
 }
@@ -165,10 +112,13 @@ pub struct ModelRegistry {
 #[derive(Debug, Default)]
 pub struct PartialModelRegistry {
     poisoned__: bool,
-    test: scrapcore_serialization::registry::PartialItemCollection<A, VersionedTest>,
+    test: scrapcore_serialization::registry::PartialItemCollection<
+        A,
+        <A as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
+    >,
     test_single: scrapcore_serialization::registry::PartialItemCollection<
         B,
-        VersionedTestSingle,
+        <B as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
     >,
     test_asset: scrapcore_serialization::registry::AssetsCollection<Option<A>>,
 }
@@ -186,12 +136,12 @@ impl scrapcore_serialization::registry::CollectionHolder<A> for ModelRegistry {
 #[automatically_derived]
 impl scrapcore_serialization::registry::PartialCollectionHolder<A>
 for PartialModelRegistry {
-    type Serialized = VersionedTest;
+    type Serialized = <A as scrapcore_serialization::serialization::SerializationFallback>::Fallback;
     fn get_collection(
         &mut self,
     ) -> &mut scrapcore_serialization::registry::PartialItemCollection<
         A,
-        VersionedTest,
+        <A as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
     > {
         &mut self.test
     }
@@ -210,12 +160,12 @@ impl scrapcore_serialization::registry::CollectionHolder<B> for ModelRegistry {
 #[automatically_derived]
 impl scrapcore_serialization::registry::PartialCollectionHolder<B>
 for PartialModelRegistry {
-    type Serialized = VersionedTestSingle;
+    type Serialized = <B as scrapcore_serialization::serialization::SerializationFallback>::Fallback;
     fn get_collection(
         &mut self,
     ) -> &mut scrapcore_serialization::registry::PartialItemCollection<
         B,
-        VersionedTestSingle,
+        <B as scrapcore_serialization::serialization::SerializationFallback>::Fallback,
     > {
         &mut self.test_single
     }

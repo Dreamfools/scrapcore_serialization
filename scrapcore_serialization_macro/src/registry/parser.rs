@@ -83,7 +83,7 @@ struct ModelEnumFieldInput {
 }
 
 #[derive(Debug, FromDeriveInput)]
-#[darling(supports(enum_newtype, enum_tuple, enum_named))]
+#[darling(supports(enum_newtype))]
 struct RegistryAttributeDeriveInput {
     // <========================>
     // <=== Technical Fields ===>
@@ -196,7 +196,13 @@ pub(super) fn parse_struct_defs(
                     .to_case(Case::Snake),
                 variant.ident.span(),
             );
-            let (ty, ty_serialized, versions) = history(&variant_name, &variant)?;
+
+            let [field] = variant.fields.fields.as_slice() else {
+                unreachable!("Should only have newtype enums")
+            };
+
+            let ty = field.ty.clone();
+            let ty_serialized = serialized_of(&field.ty);
             if used_types.contains(&ty) {
                 bail!(ty.span(), "This type is already defined in the model")
             }
@@ -211,7 +217,6 @@ pub(super) fn parse_struct_defs(
                 field_name,
                 ty,
                 ty_versioned: ty_serialized,
-                versioning: versions,
             };
             if variant.collection.is_present() {
                 registry.collections.0.push(model);

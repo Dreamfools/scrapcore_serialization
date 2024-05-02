@@ -8,7 +8,7 @@ use syn::{parse_macro_input, DeriveInput, Type, Visibility};
 
 use crate::error::{tokens, MacroError};
 use crate::registry::parser::parse_struct_defs;
-use crate::{MOD_ERRORS, MOD_REGISTRY, MOD_SERIALIZATION};
+use crate::{MOD_ERRORS, MOD_REGISTRY};
 
 mod parser;
 
@@ -33,8 +33,6 @@ struct ModelKind {
     ty: Type,
     /// Serialized enum type name
     ty_versioned: Type,
-    /// Versioning of serialized types
-    versioning: Vec<Version>,
 }
 
 #[derive(Debug)]
@@ -118,11 +116,9 @@ pub(crate) fn registry_impl_inner(
     let finalize = definitions.partial_finalize();
     let insert_impl = definitions.insert_impl();
     let item_ids = definitions.item_ids();
-    let migrations = definitions.migrations();
 
     Ok(quote! {
         #model
-        #migrations
         #item_ids
         #model_serialized
         #kind
@@ -704,76 +700,6 @@ impl RegistryDefinitions {
 
         quote! {
             #(#entries)*
-        }
-    }
-
-    /// Migration movel impls
-    fn migrations(&self) -> TokenStream {
-        let Self {
-            collections,
-            singletons,
-            visibility,
-            ..
-        } = self;
-
-        let reg = MOD_REGISTRY.deref();
-        let ser = MOD_SERIALIZATION.deref();
-        let defs = collections.iter().chain(singletons.iter()).map(
-            |ModelKind {
-                 span,
-                variant_name,
-                 ty_versioned,
-                 ty,
-                 versioning,
-                ..
-             }| {
-                let fields = versioning.iter().map(
-                    |Version {
-                         ty,
-                         ty_serialized,
-                         version_name,
-                         version_variant,
-                         ..
-                     }| {
-                        quote_spanned! {ty.span()=>
-                            #[serde(rename = #version_name)]
-                            #version_variant(#ty_serialized),
-                        }
-                    },
-                );
-
-                let migrate_impl = (versioning.len() == 1).then(|| {
-                    let Version{ ty_serialized, version_variant, .. } = &versioning[0];
-                    quote_spanned! {*span=>
-                        #[automatically_derived]
-                        impl<Registry: #reg::PartialRegistry> #ser::DeserializeModel<#ty, Registry> for #ty_versioned where #ty_serialized: #ser::DeserializeModel<#ty, Registry> {
-                            fn deserialize(self, registry: &mut Registry) -> Result<#ty, DeserializationError<Registry>> {
-                                match self {
-                                    Self::#version_variant(data) => data.deserialize(registry),
-                                }
-                            }
-                        }
-                    }
-                });
-
-                let rename = variant_name.to_string();
-                let schema_derive = self.schema.then(|| quote!(#[derive(schemars::JsonSchema)]));
-                quote_spanned! {*span=>
-                    #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-                    #schema_derive
-                    #[serde(rename = #rename)]
-                    #[serde(tag = "version")]
-                    #visibility enum #ty_versioned {
-                        #(#fields)*
-                    }
-
-                    #migrate_impl
-                }
-            },
-        );
-
-        quote! {
-            #(#defs)*
         }
     }
 }
