@@ -154,6 +154,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
 
 [[package]]
+name = "assets_manager"
+version = "0.11.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2225fb1402025b8efb307610a03c40a11a40a2548385cfd91534cb3242c5f2e6"
+dependencies = [
+ "ahash",
+ "log",
+]
+
+[[package]]
 name = "async-broadcast"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1981,6 +1991,7 @@ name = "scrapcore_serialization"
 version = "0.1.0"
 dependencies = [
  "ahash",
+ "assets_manager",
  "bevy_asset",
  "duplicate",
  "itertools",

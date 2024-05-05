@@ -35,6 +35,9 @@ pub mod miniquad;
 #[cfg(feature = "macroquad")]
 pub mod macroquad;
 
+#[cfg(feature = "assets_manager")]
+pub mod assets_manager;
+
 pub use min_max::ApplyMax;
 pub use min_max::ApplyMin;
 
