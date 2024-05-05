@@ -32,6 +32,9 @@ pub mod bevy;
 #[cfg(feature = "miniquad")]
 pub mod miniquad;
 
+#[cfg(feature = "macroquad")]
+pub mod macroquad;
+
 pub use min_max::ApplyMax;
 pub use min_max::ApplyMin;
 
