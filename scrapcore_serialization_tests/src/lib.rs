@@ -65,7 +65,7 @@ fn load_database(path: &Path) -> Result<CityRegistry, DeserializationError<Parti
         let data = std::fs::read(entry.path()).unwrap();
 
         let data: CityItemSerialized = serde_json::from_slice(&data).map_err(|err| {
-            DeserializationErrorKind::<PartialCityRegistry>::ParsingError(err.to_string())
+            DeserializationErrorKind::<PartialCityRegistry>::LoadingError(err.to_string())
                 .into_err()
         })?;
         registry.insert(entry.path(), data)?;
