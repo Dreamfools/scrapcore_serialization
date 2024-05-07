@@ -17,8 +17,6 @@ pub enum ModelItem {
     Test(A),
     TestSingle(B),
 }
-pub type ATestId = scrapcore_serialization::registry::CollectionItemId<A>;
-pub type SomethingElse = scrapcore_serialization::registry::CollectionItemId<B>;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[derive(schemars::JsonSchema)]
 #[serde(tag = "type")]
@@ -282,4 +280,9 @@ impl PartialModelRegistry {
         }
         Ok(())
     }
+}
+pub mod id {
+    use super::*;
+    pub type ATestId = scrapcore_serialization::registry::CollectionItemId<A>;
+    pub type SomethingElse = scrapcore_serialization::registry::CollectionItemId<B>;
 }

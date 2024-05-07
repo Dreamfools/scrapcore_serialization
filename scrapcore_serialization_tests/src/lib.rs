@@ -9,6 +9,8 @@ use walkdir::WalkDir;
 #[cfg(test)]
 mod tests;
 
+use id::PersonId;
+
 #[derive(Debug, DatabaseModel)]
 pub struct Person {
     pub name: String,

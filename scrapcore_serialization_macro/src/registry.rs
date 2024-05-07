@@ -105,7 +105,6 @@ pub(crate) fn registry_impl_inner(
 
     Ok(quote! {
         #model
-        #item_ids
         #model_serialized
         #kind
         #kind_providers
@@ -114,6 +113,12 @@ pub(crate) fn registry_impl_inner(
         #impls
         #finalize
         #insert_impl
+
+        pub mod id {
+            use super::*;
+
+            #item_ids
+        }
     })
 }
 
