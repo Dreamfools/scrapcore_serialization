@@ -10,7 +10,7 @@ use syn::spanned::Spanned;
 use syn::{DeriveInput, Generics, Type, Visibility};
 
 use crate::error::{bail, MacroError};
-use crate::registry::{AssetKind, ModelKind, RegistryDefinitions, Version};
+use crate::registry::{AssetKind, ModelKind, RegistryDefinitions};
 use crate::serialized_of;
 
 #[derive(Debug, FromMeta)]
@@ -229,77 +229,6 @@ pub(super) fn parse_struct_defs(
     }
 
     Ok(registry)
-}
-
-/// returns (type, serialized_type, history)
-fn history(
-    variant_name: &Ident,
-    variant: &SpannedValue<ModelAttributeInput>,
-) -> Result<(Type, Type, Vec<Version>), MacroError> {
-    let mut versions: Vec<Version> = variant
-        .fields
-        .fields
-        .iter()
-        .map(version_data)
-        .try_collect()?;
-    versions.sort_unstable_by(|a, b| a.version.cmp(&b.version).reverse());
-
-    let mut version_names = vec![&versions[0].version_name];
-    for x in versions.windows(2) {
-        let [first, second] = x else {
-            unreachable!("Window size is 2")
-        };
-        if first.version == second.version {
-            bail!(
-                second.ty.span(),
-                "Variant with version `{}` is already declared",
-                second.version,
-            );
-        } else if version_names.contains(&&second.version_name) {
-            bail!(
-                second.ty.span(),
-                "Variant with version name `{}` is already declared",
-                second.version_name,
-            );
-        }
-        version_names.push(&second.version_name)
-    }
-    let final_type = versions[0].ty.clone();
-
-    let serialized_type: Type = syn::parse_str(&format!("Versioned{}", variant_name)).unwrap();
-
-    Ok((final_type, serialized_type, versions))
-}
-
-fn version_data(field: &SpannedValue<ModelEnumFieldInput>) -> Result<Version, MacroError> {
-    let ty = field.ty.clone();
-    let ty_serialized = serialized_of(&field.ty);
-    let field_version = if let Some(version) = field.version {
-        version
-    } else if let Some(ident) = &field.ident {
-        let ident_str = ident.to_string();
-        let Some(Ok(version)) = ident_str.starts_with('v').then(|| {
-            let ident_str = &ident_str[1..];
-            usize::from_str(ident_str)
-        }) else {
-            bail!(ident.span(), "Field name must be in a `v{{usize}}` form, for example: `v1`, `v15`. If you want to use custom names, use #[model(version=1)] to specify the version manually");
-        };
-        version
-    } else {
-        1
-    };
-    let version_name = field
-        .version_name
-        .clone()
-        .unwrap_or_else(|| field_version.to_string());
-
-    Ok(Version {
-        version: field_version,
-        ty,
-        ty_serialized,
-        version_name,
-        version_variant: Ident::new(&format!("V{}", field_version), field.span()),
-    })
 }
 
 fn strip_attrs(input: &mut DeriveInput) {

@@ -3,7 +3,6 @@ use std::ops::Deref;
 use itertools::Itertools;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{quote, quote_spanned};
-use syn::spanned::Spanned;
 use syn::{parse_macro_input, DeriveInput, Type, Visibility};
 
 use crate::error::{tokens, MacroError};
@@ -33,19 +32,6 @@ struct ModelKind {
     ty: Type,
     /// Serialized enum type name
     ty_versioned: Type,
-}
-
-#[derive(Debug)]
-struct Version {
-    version: usize,
-    /// Non-serialized type of the version
-    ty: Type,
-    /// Serialized type of the version
-    ty_serialized: Type,
-    /// String version name
-    version_name: String,
-    /// Enum variant name of the version
-    version_variant: Ident,
 }
 
 #[derive(Debug)]
