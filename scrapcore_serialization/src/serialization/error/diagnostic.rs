@@ -16,8 +16,11 @@ impl<Registry: SerializationRegistry> Display for ItemDiagnosticKind<Registry> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             ItemDiagnosticKind::Path(path) => match path {
+                DeserializationErrorStackItem::File(path) => {
+                    write!(f, "Failed to load file at path `{}`", path)
+                }
                 DeserializationErrorStackItem::ItemByPath(path, kind) => {
-                    write!(f, "Failed to load {kind} at {}", path)
+                    write!(f, "Failed to load {kind} at path `{}`", path)
                 }
                 DeserializationErrorStackItem::ItemById(id, kind) => {
                     write!(f, "Failed to deserialize {kind}({id})")

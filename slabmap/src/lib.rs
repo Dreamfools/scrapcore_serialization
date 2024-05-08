@@ -328,6 +328,10 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
     pub fn ids(&self) -> impl Iterator<Item = SlabMapId<V>> + '_ {
         self.keys.right_values().copied().map(|k| SlabMapId::new(k))
     }
+
+    pub fn keys_ids(&self) -> impl Iterator<Item = (&'_ K, SlabMapId<V>)> + '_ {
+        self.keys.iter().map(|(k, i)| (k, SlabMapId::new(*i)))
+    }
 }
 
 impl<K: Eq + Hash, V, Hasher: BuildHasher> Index<SlabMapId<V>> for SlabMap<K, V, Hasher> {

@@ -319,7 +319,7 @@ impl RegistryDefinitions {
                  ..
              }| {
                 quote_spanned! {*span=>
-                    #field_name: #reg::Singleton<#ty>,
+                    pub #field_name: #reg::Singleton<#ty>,
                 }
             },
         );
@@ -331,7 +331,7 @@ impl RegistryDefinitions {
                  ..
              }| {
                 quote_spanned! {*span=>
-                    #field_name: #reg::ItemCollection<#ty>,
+                    pub #field_name: #reg::ItemCollection<#ty>,
                 }
             },
         );
@@ -343,7 +343,7 @@ impl RegistryDefinitions {
                  ..
              }| {
                 quote_spanned! {*span=>
-                    #field_name: #reg::AssetsCollection<#ty>
+                    pub #field_name: #reg::AssetsCollection<#ty>
                 }
             },
         );
@@ -462,7 +462,7 @@ impl RegistryDefinitions {
             },
         );
 
-        let collections = collections.iter().map(
+        let collections_impls = collections.iter().map(
             |ModelKind {
                  span,
                  field_name,
@@ -526,9 +526,18 @@ impl RegistryDefinitions {
             },
         );
 
+        let reservations = collections.iter().map(
+            |ModelKind {
+                 ty,
+                ..
+             }| {
+                quote!(#reg::hot_reloading::reserve_ids::<#ty, Self>(registry, self)?;)
+            },
+        );
+
         quote! {
             #(#singletons)*
-            #(#collections)*
+            #(#collections_impls)*
             #(#assets)*
 
             #[automatically_derived]
@@ -546,6 +555,14 @@ impl RegistryDefinitions {
             }
 
             impl #reg::PartialRegistry for #partial_registry_name {
+                type Registry = #registry_name;
+
+                fn reserve_ids(&mut self, registry: &Self::Registry) -> Result<(), DeserializationError<Self>> {
+                    #(#reservations)*
+
+                    Ok(())
+                }
+
                 fn poison(&mut self) {
                     self.poisoned__ = true;
                 }

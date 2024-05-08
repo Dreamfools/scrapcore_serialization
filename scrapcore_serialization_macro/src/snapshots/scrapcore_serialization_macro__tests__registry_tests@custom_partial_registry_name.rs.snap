@@ -101,9 +101,9 @@ for CustomPartialRegistry {
 }
 #[derive(Debug)]
 pub struct ModelRegistry {
-    test_single: scrapcore_serialization::registry::Singleton<B>,
-    test: scrapcore_serialization::registry::ItemCollection<A>,
-    test_asset: scrapcore_serialization::registry::AssetsCollection<Option<A>>,
+    pub test_single: scrapcore_serialization::registry::Singleton<B>,
+    pub test: scrapcore_serialization::registry::ItemCollection<A>,
+    pub test_asset: scrapcore_serialization::registry::AssetsCollection<Option<A>>,
 }
 #[derive(Debug, Default)]
 pub struct CustomPartialRegistry {
@@ -206,6 +206,17 @@ impl scrapcore_serialization::registry::SerializationRegistry for CustomPartialR
     type Error = ModelError;
 }
 impl scrapcore_serialization::registry::PartialRegistry for CustomPartialRegistry {
+    type Registry = ModelRegistry;
+    fn reserve_ids(
+        &mut self,
+        registry: &Self::Registry,
+    ) -> Result<(), DeserializationError<Self>> {
+        scrapcore_serialization::registry::hot_reloading::reserve_ids::<
+            A,
+            Self,
+        >(registry, self)?;
+        Ok(())
+    }
     fn poison(&mut self) {
         self.poisoned__ = true;
     }

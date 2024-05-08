@@ -44,6 +44,12 @@ pub fn convert_partial_collection<T, Registry: ItemKindProvider<T> + PartialColl
     let mut out: ItemCollection<T> = Default::default();
     for (key, id, (_, value)) in raw.into_iter().sorted_by_key(|(_, id, _)| *id) {
         let value = match value {
+            MaybeRawItem::HotReloading => {
+                return Err(InternalDeserializationError::UnfilledHotReloadingSlot(
+                    key,
+                    Registry::kind(),
+                ))
+            }
             MaybeRawItem::Raw(item) => {
                 return Err(
                     InternalDeserializationError::ConversionEntryNotDeserialized(

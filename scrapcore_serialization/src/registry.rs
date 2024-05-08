@@ -13,6 +13,7 @@ use crate::{AssetName, ItemId};
 
 pub mod entry;
 pub mod finalize;
+pub mod hot_reloading;
 pub mod index;
 pub mod inline;
 pub mod insert;
@@ -29,6 +30,8 @@ pub type CollectionItemId<T> = SlabMapId<RegistryEntry<T>>;
 /// Storage type for items in partial collection
 #[derive(Debug)]
 pub enum MaybeRawItem<T, Serialized> {
+    /// Hot reloading slot, used to keep IDs stable during hot reloading
+    HotReloading,
     /// Raw serialized item
     Raw(RegistryEntrySerialized<Serialized>),
     /// Item that is currently in process of being deserialized
@@ -103,6 +106,15 @@ pub trait SerializationRegistry: Debug {
 }
 
 pub trait PartialRegistry: SerializationRegistry {
+    type Registry: SerializationRegistry;
+
+    /// Reserves IDs to match the existing registry
+    ///
+    /// Should return an error if `self` is not empty
+    fn reserve_ids(&mut self, registry: &Self::Registry) -> Result<(), DeserializationError<Self>>
+    where
+        Self: Sized;
+
     /// Marks registry as poisoned, preventing further deserialization
     fn poison(&mut self);
 

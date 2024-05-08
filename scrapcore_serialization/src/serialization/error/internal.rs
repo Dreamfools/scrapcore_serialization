@@ -20,6 +20,8 @@ pub enum InternalDeserializationError<Registry: SerializationRegistry> {
     EntryBecameRaw(PathIdentifier, Registry::ItemKind),
     #[error("Reserved {} collection entry was turned into a different Deserialized entry during deserialization: {}", .1, .0)]
     EntryBecameDeserialized(PathIdentifier, Registry::ItemKind),
+    #[error("Reserved {} collection entry was turned into a reserved hot reloading slot: {}", .1, .0)]
+    EntryBecameUnfilledHotReloadingSlot(PathIdentifier, Registry::ItemKind),
     #[error("Reserved {} collection entry has different ID after deserialization: {}", .1, .0,)]
     EntryChangedId(ItemId, Registry::ItemKind),
     #[error("Attempted to deserialize {} collection item while having a conflicting raw entry: {}", .1, .0)]
@@ -41,6 +43,8 @@ pub enum InternalDeserializationError<Registry: SerializationRegistry> {
     ConversionMissingSingleton(Registry::ItemKind),
     #[error("Singleton {}({}) is not processed, was `process_raw_singleton` not invoked?", .1, .0)]
     ConversionUnprocessedSingleton(PathIdentifier, Registry::ItemKind),
+    #[error("Item {}({}) is not present after hot reload, full mod reload is required.", .1, .0)]
+    UnfilledHotReloadingSlot(ItemId, Registry::ItemKind),
 }
 
 impl<Registry: SerializationRegistry> InternalDeserializationError<Registry> {

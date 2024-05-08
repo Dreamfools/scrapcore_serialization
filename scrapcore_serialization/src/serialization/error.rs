@@ -16,7 +16,7 @@ pub mod internal;
 #[derive(Debug, Error, Clone)]
 pub enum DeserializationErrorKind<Registry: SerializationRegistry> {
     /// Error at data loading stage
-    #[error("{}", .0)]
+    #[error("Data loading error: {}", .0)]
     LoadingError(String),
     #[error("Item {}({}) is missing", .1, .0)]
     MissingItem(ItemId, Registry::ItemKind),
@@ -68,6 +68,7 @@ impl<Registry: SerializationRegistry> DeserializationErrorKind<Registry> {
 
 #[derive(Debug, Clone)]
 pub enum DeserializationErrorStackItem<Registry: SerializationRegistry> {
+    File(PathIdentifier),
     ItemByPath(PathIdentifier, Registry::ItemKind),
     ItemById(ItemId, Registry::ItemKind),
     Field(&'static str),
@@ -82,6 +83,9 @@ pub enum DeserializationErrorStackItem<Registry: SerializationRegistry> {
 impl<Registry: SerializationRegistry> Display for DeserializationErrorStackItem<Registry> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            DeserializationErrorStackItem::File(path) => {
+                write!(f, "In file at `{}`", path)
+            }
             DeserializationErrorStackItem::ItemByPath(path, kind) => {
                 write!(f, "In item <{kind}> at `{}`", path)
             }
@@ -109,6 +113,19 @@ impl<Registry: SerializationRegistry> Display for DeserializationErrorStackItem<
 pub struct DeserializationError<Registry: SerializationRegistry> {
     pub kind: DeserializationErrorKind<Registry>,
     pub stack: Vec<DeserializationErrorStackItem<Registry>>,
+}
+
+impl<Registry: SerializationRegistry> DeserializationError<Registry> {
+    /// Checks if this error is just a hot reload blocker, and can be solved by
+    /// making a full reload, without any extra actions form the user
+    pub fn is_hot_reload_blocker(&self) -> bool {
+        matches!(
+            self.kind,
+            DeserializationErrorKind::InternalError(
+                InternalDeserializationError::UnfilledHotReloadingSlot(..)
+            )
+        )
+    }
 }
 
 impl<Registry: SerializationRegistry> Display for DeserializationError<Registry> {

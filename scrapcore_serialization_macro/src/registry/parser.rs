@@ -5,7 +5,6 @@ use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
 use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
-use std::str::FromStr;
 use syn::spanned::Spanned;
 use syn::{DeriveInput, Generics, Type, Visibility};
 

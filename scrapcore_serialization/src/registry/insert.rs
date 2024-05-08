@@ -9,11 +9,10 @@ use crate::registry::{
 use crate::serialization::error::{
     DeserializationError, DeserializationErrorKind, DeserializationErrorStackItem,
 };
-use crate::serialization::SerializationFallback;
 
 /// Insert a raw item into a registry, returning an error if the item with the
 /// same ID is already added
-pub fn registry_insert<T: SerializationFallback, Registry: PartialCollectionHolder<T>>(
+pub fn registry_insert<T, Registry: PartialCollectionHolder<T>>(
     registry: &mut Registry,
     path: impl Into<PathIdentifier>,
     item: RegistryEntrySerialized<Registry::Serialized>,
@@ -21,20 +20,26 @@ pub fn registry_insert<T: SerializationFallback, Registry: PartialCollectionHold
     poison_on_err(registry, |registry| {
         let path = path.into();
         let raw = registry.get_collection();
-        if let Some(entry) = raw.get_by_key(&item.id) {
-            return Err(DeserializationErrorKind::DuplicateItem {
-                id: item.id.clone(),
-                kind: Registry::kind(),
-                path_a: entry.0.clone(),
-                path_b: path.clone(),
+        if let Some(entry) = raw.get_by_key_mut(&item.id) {
+            // Hot reloading slots can be safely replaced
+            if matches!(entry.1, MaybeRawItem::HotReloading) {
+                *entry = (path, MaybeRawItem::Raw(item));
+            } else {
+                return Err(DeserializationErrorKind::DuplicateItem {
+                    id: item.id.clone(),
+                    kind: Registry::kind(),
+                    path_a: entry.0.clone(),
+                    path_b: path.clone(),
+                }
+                .into_err()
+                .context(DeserializationErrorStackItem::ItemByPath(
+                    path,
+                    Registry::kind(),
+                )));
             }
-            .into_err()
-            .context(DeserializationErrorStackItem::ItemByPath(
-                path,
-                Registry::kind(),
-            )));
+        } else {
+            raw.insert(item.id.clone(), (path, MaybeRawItem::Raw(item)));
         }
-        raw.insert(item.id.clone(), (path, MaybeRawItem::Raw(item)));
         Ok(())
     })
 }

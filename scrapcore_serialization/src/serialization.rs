@@ -162,6 +162,13 @@ impl<'a, Registry: PartialCollectionHolder<Data>, Data>
             let (_, item) = &mut items[id];
 
             let other = match item {
+                MaybeRawItem::HotReloading => {
+                    return Err(InternalDeserializationError::UnfilledHotReloadingSlot(
+                        self.to_owned(),
+                        Registry::kind(),
+                    )
+                    .into());
+                }
                 MaybeRawItem::Raw(_) => {
                     let id = id.as_untyped().as_typed_unchecked();
                     let MaybeRawItem::Raw(other) =
@@ -203,6 +210,13 @@ impl<Registry: PartialCollectionHolder<Data>, Data>
             let (path, item) = &mut items[id];
 
             let (model_id, id) = match item {
+                MaybeRawItem::HotReloading => {
+                    return Err(InternalDeserializationError::UnfilledHotReloadingSlot(
+                        self.id.clone(),
+                        Registry::kind(),
+                    )
+                    .into());
+                }
                 MaybeRawItem::Raw(_) => {
                     return Err(InternalDeserializationError::ConflictingRawEntry(
                         path.clone(),
@@ -227,6 +241,15 @@ impl<Registry: PartialCollectionHolder<Data>, Data>
                 .get_by_id_mut(id)
                 .ok_or_else(|| InternalDeserializationError::EntryGoneDuringDeserialization)?;
             match item {
+                MaybeRawItem::HotReloading => {
+                    return Err(
+                        InternalDeserializationError::EntryBecameUnfilledHotReloadingSlot(
+                            path.clone(),
+                            Registry::kind(),
+                        )
+                        .into_err(),
+                    )
+                }
                 MaybeRawItem::Raw(_) => {
                     return Err(InternalDeserializationError::EntryBecameRaw(
                         path.clone(),
