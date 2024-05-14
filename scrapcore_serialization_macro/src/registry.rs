@@ -31,7 +31,7 @@ struct ModelKind {
     /// Type name of the latest version
     ty: Type,
     /// Serialized enum type name
-    ty_versioned: Type,
+    ty_serialized: Type,
 }
 
 #[derive(Debug)]
@@ -130,7 +130,7 @@ impl RegistryDefinitions {
             self.collections.iter().map(
                 |ModelKind {
                      variant_name,
-                     ty_versioned,
+                     ty_serialized: ty_versioned,
                      span,
                      ..
                  }| {
@@ -140,7 +140,7 @@ impl RegistryDefinitions {
         let singletons = self.singletons.iter().map(
             |ModelKind {
                  variant_name,
-                 ty_versioned,
+                 ty_serialized: ty_versioned,
                  span,
                  ..
              }| { quote_spanned!(*span=>#variant_name(#ty_versioned)) },
@@ -372,7 +372,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned,
+                 ty_serialized: ty_versioned,
                  ty,
                  ..
              }| {
@@ -385,7 +385,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned,
+                 ty_serialized: ty_versioned,
                  ty,
                  ..
              }| {
@@ -436,7 +436,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned,
+                 ty_serialized: ty_versioned,
                  ty,
                  ..
              }| {
@@ -466,7 +466,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned,
+                 ty_serialized: ty_versioned,
                  ty,
                  ..
              }| {
@@ -592,7 +592,7 @@ impl RegistryDefinitions {
             |ModelKind {
                  span,
                  field_name,
-                 ty_versioned: _ty_versioned,
+                 ty_serialized: _ty_versioned,
                  ty,
                 ..
              }| {
@@ -669,7 +669,7 @@ impl RegistryDefinitions {
         let reg = MOD_REGISTRY.deref();
         let err = MOD_ERRORS.deref();
 
-        let cols = collections.iter().map(|ModelKind{ span, variant_name, ty_versioned: _ty_versioned, ty, .. }| {
+        let cols = collections.iter().map(|ModelKind{ span, variant_name, ty_serialized: _ty_versioned, ty, .. }| {
             quote_spanned! {*span=>
                 #serialized_model_name::#variant_name(item) => #reg::insert::registry_insert::<#ty, #partial_registry_name>(registry, path, item)?
             }

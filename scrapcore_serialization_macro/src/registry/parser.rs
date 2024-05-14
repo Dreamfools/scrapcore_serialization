@@ -2,7 +2,6 @@ use convert_case::{Case, Casing};
 use darling::ast::{Data, Fields, NestedMeta};
 use darling::util::{Flag, SpannedValue};
 use darling::{FromDeriveInput, FromField, FromMeta, FromVariant};
-use itertools::Itertools;
 use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use syn::spanned::Spanned;
@@ -61,23 +60,9 @@ struct ModelAttributeInput {
 #[derive(Debug, FromField)]
 #[darling(attributes(model))]
 struct ModelEnumFieldInput {
-    /// Version of the data entry. The default version is `1`
-    ///
-    /// Versioning on only supposed to be used for breaking format changes, so
-    /// only the "major" version can be specified here
-    ///
-    /// Please open a github issue if you believe you have a valid use case
-    /// for more gradual versioning
-    version: Option<usize>,
-
-    /// Custom name of the version, used for serialization. Defaults to string
-    /// representation of `version` field
-    version_name: Option<String>,
-
     // <========================>
     // <=== Technical Fields ===>
     // <========================>
-    ident: Option<Ident>,
     ty: Type,
 }
 
@@ -169,10 +154,7 @@ pub(super) fn parse_struct_defs(
 
         if variant.asset.is_present() {
             if !variant.fields.is_newtype() {
-                bail!(
-                    variant.span(),
-                    "Versioning is not supported for asset variants"
-                );
+                unreachable!("Should only have newtype enums")
             }
             registry.assets.push(AssetKind {
                 span: variant.span(),
@@ -215,7 +197,7 @@ pub(super) fn parse_struct_defs(
                 variant_name,
                 field_name,
                 ty,
-                ty_versioned: ty_serialized,
+                ty_serialized,
             };
             if variant.collection.is_present() {
                 registry.collections.0.push(model);
