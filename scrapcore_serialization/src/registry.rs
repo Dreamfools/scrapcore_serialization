@@ -123,7 +123,7 @@ pub trait PartialRegistry: SerializationRegistry {
 }
 
 /// Runs the closure on the partial registry, returning the error if registry
-/// is already poisoned, and poisoning the registry is error happens during
+/// is already poisoned, and poisoning the registry if error happens during
 /// evaluation
 #[inline(always)]
 pub fn poison_on_err<Registry: PartialRegistry, T>(
