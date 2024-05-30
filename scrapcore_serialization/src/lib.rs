@@ -11,3 +11,5 @@ pub type ItemId = String;
 pub type ItemIdRef<'a> = &'a str;
 pub type AssetName = String;
 pub type AssetNameRef<'a> = &'a str;
+
+pub use slabmap;
