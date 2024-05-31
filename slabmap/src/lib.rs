@@ -1,13 +1,16 @@
 use std::borrow::Borrow;
+use std::collections::HashMap;
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::marker::PhantomData;
 use std::ops::{Index, IndexMut};
+use std::rc::Rc;
 
-use bimap::BiHashMap;
-use nohash_hasher::NoHashHasher;
 #[cfg(feature = "serde")]
 use serde::Deserializer;
-use slab::Slab;
+
+use mem::{Ref, Wrapper};
+
+mod mem;
 
 #[derive(Debug)]
 pub struct SlabMapId<V>(usize, PhantomData<V>);
@@ -115,8 +118,20 @@ impl<K> From<SlabMapUntypedId> for SlabMapKeyOrUntypedId<K> {
 
 #[derive(Debug, Clone)]
 pub struct SlabMap<K: Eq + Hash, V, Hasher: BuildHasher = BuildHasherDefault<ahash::AHasher>> {
-    items: Slab<V>,
-    keys: BiHashMap<K, usize, Hasher, BuildHasherDefault<NoHashHasher<usize>>>,
+    items: Vec<V>,
+    ids: HashMap<Ref<K>, usize, Hasher>,
+    keys: Vec<Ref<K>>,
+}
+
+// safe because internal Rcs are not exposed by the api and the reference counts
+// only change in methods with &mut self
+unsafe impl<K: Eq + Hash + Send, V: Send, Hasher: BuildHasher + Send> Send
+    for SlabMap<K, V, Hasher>
+{
+}
+unsafe impl<K: Eq + Hash + Sync, V: Sync, Hasher: BuildHasher + Sync> Sync
+    for SlabMap<K, V, Hasher>
+{
 }
 
 #[derive(Debug)]
@@ -124,10 +139,12 @@ pub struct SlabMapDuplicateError<K, V>(pub K, pub V);
 
 impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
     pub fn insert(&mut self, key: K, value: V) -> (SlabMapId<V>, Option<V>) {
-        match self.keys.get_by_left(&key) {
+        match self.ids.get(Wrapper::wrap(&key)) {
             None => {
-                let id = self.items.insert(value);
-                self.keys.insert(key, id);
+                let id = self.items.len();
+                self.items.push(value);
+
+                self.add_key_mapping(key, id);
 
                 (SlabMapId::new(id), None)
             }
@@ -144,13 +161,15 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         key: K,
         item: impl FnOnce(SlabMapId<V>) -> V,
     ) -> (SlabMapId<V>, Option<V>) {
-        match self.keys.get_by_left(&key) {
+        match self.ids.get(Wrapper::wrap(&key)) {
             None => {
-                let entry = self.items.vacant_entry();
-                let id = SlabMapId::<V>::new(entry.key());
+                let id = self.items.len();
+                let id = SlabMapId::<V>::new(id);
                 let item = item(id);
-                self.keys.insert(key, entry.key());
-                entry.insert(item);
+                self.items.push(item);
+
+                self.add_key_mapping(key, id.0);
+
                 (id, None)
             }
             Some(id) => {
@@ -167,11 +186,13 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         key: K,
         value: V,
     ) -> Result<SlabMapId<V>, SlabMapDuplicateError<K, V>> {
-        if self.keys.contains_left(&key) {
+        if self.ids.contains_key(Wrapper::wrap(&key)) {
             return Err(SlabMapDuplicateError(key, value));
         }
-        let id = self.items.insert(value);
-        self.keys.insert(key, id);
+        let id = self.items.len();
+        self.items.push(value);
+
+        self.add_key_mapping(key, id);
 
         Ok(SlabMapId::new(id))
     }
@@ -181,15 +202,28 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         key: K,
         item: impl FnOnce(SlabMapId<V>) -> V,
     ) -> Result<SlabMapId<V>, SlabMapDuplicateError<K, V>> {
-        if let Some(id) = self.keys.get_by_left(&key) {
+        if let Some(id) = self.ids.get(Wrapper::wrap(&key)) {
             return Err(SlabMapDuplicateError(key, item(SlabMapId::new(*id))));
         }
-        let entry = self.items.vacant_entry();
-        let id = SlabMapId::<V>::new(entry.key());
+
+        let id = self.items.len();
+        let id = SlabMapId::<V>::new(id);
+
         let item = item(id);
-        self.keys.insert(key, entry.key());
-        entry.insert(item);
+        self.items.push(item);
+
+        self.add_key_mapping(key, id.0);
+
         Ok(id)
+    }
+
+    fn add_key_mapping(&mut self, key: K, id: usize) {
+        let key = Ref(Rc::new(key));
+        self.keys.push(key.clone());
+        self.ids.insert(key, id);
+
+        debug_assert_eq!(self.items.len(), self.keys.len());
+        debug_assert_eq!(self.items.len(), self.ids.len());
     }
 
     pub fn get_by_id(&self, id: SlabMapId<V>) -> Option<&V> {
@@ -200,7 +234,7 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         self.items.get_mut(id.0)
     }
     pub fn contains_id(&self, id: SlabMapId<V>) -> bool {
-        self.items.contains(id.0)
+        id.0 < self.items.len()
     }
 
     pub fn get_by_untyped_id(&self, id: SlabMapUntypedId) -> Option<&V> {
@@ -211,7 +245,7 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         self.items.get_mut(id.0)
     }
     pub fn contains_untyped_id(&self, id: SlabMapUntypedId) -> bool {
-        self.items.contains(id.0)
+        id.0 < self.items.len()
     }
 
     pub fn get_by_raw(&self, id: usize) -> Option<&V> {
@@ -222,7 +256,7 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         self.items.get_mut(id)
     }
     pub fn contains_raw(&self, id: usize) -> bool {
-        self.items.contains(id)
+        id < self.items.len()
     }
 
     pub fn get_by_key<Q>(&self, key: &Q) -> Option<&V>
@@ -230,7 +264,9 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         K: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
-        self.keys.get_by_left(key).and_then(|e| self.get_by_raw(*e))
+        self.ids
+            .get(Wrapper::wrap(key))
+            .and_then(|e| self.get_by_raw(*e))
     }
 
     pub fn get_by_key_mut<Q>(&mut self, key: &Q) -> Option<&mut V>
@@ -238,8 +274,8 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         K: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
-        self.keys
-            .get_by_left(key)
+        self.ids
+            .get(Wrapper::wrap(key))
             .copied()
             .and_then(|e| self.get_by_raw_mut(e))
     }
@@ -248,7 +284,7 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         K: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
-        self.keys.contains_left(key)
+        self.ids.contains_key(Wrapper::wrap(key))
     }
 
     pub fn get(&self, k: SlabMapKeyOrId<K, V>) -> Option<&V> {
@@ -284,53 +320,66 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
         K: Borrow<Q>,
         Q: Eq + Hash + ?Sized,
     {
-        self.keys.get_by_left(key).map(|e| SlabMapId::new(*e))
+        self.ids.get(Wrapper::wrap(key)).map(|e| SlabMapId::new(*e))
     }
 
     pub fn id_to_key(&self, id: SlabMapId<V>) -> Option<&K> {
-        self.keys.get_by_right(&id.0)
+        self.keys.get(id.0).map(|r| &*r.0)
     }
 
     pub fn untyped_to_key(&self, id: SlabMapUntypedId) -> Option<&K> {
-        self.keys.get_by_right(&id.0)
+        self.keys.get(id.0).map(|r| &*r.0)
     }
 
     pub fn values(&self) -> impl Iterator<Item = &V> {
-        self.items.iter().map(|e| e.1)
+        self.items.iter()
     }
 
     pub fn values_mut(&mut self) -> impl Iterator<Item = &mut V> {
-        self.items.iter_mut().map(|e| e.1)
+        self.items.iter_mut()
     }
 
     pub fn iter(&self) -> impl Iterator<Item = (SlabMapId<V>, &V)> {
-        self.items.iter().map(|(id, e)| (SlabMapId::new(id), e))
+        self.items
+            .iter()
+            .enumerate()
+            .map(|(id, e)| (SlabMapId::new(id), e))
     }
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = (SlabMapId<V>, &mut V)> {
-        self.items.iter_mut().map(|(id, e)| (SlabMapId::new(id), e))
+        self.items
+            .iter_mut()
+            .enumerate()
+            .map(|(id, e)| (SlabMapId::new(id), e))
     }
 
     pub fn into_iter(mut self) -> impl Iterator<Item = (K, usize, V)> {
-        self.items.into_iter().map(move |(id, v)| {
-            let (key, _) = self
-                .keys
-                .remove_by_right(&id)
-                .unwrap_or_else(|| unreachable!());
-            (key, id, v)
-        })
+        // drop keys map to free RCs
+        drop(self.ids);
+
+        self.keys
+            .into_iter()
+            .zip(self.items)
+            .enumerate()
+            .map(|(id, (key, value))| {
+                let key = Rc::into_inner(key.0).expect("Key RCs should be freed");
+                (key, id, value)
+            })
     }
 
     pub fn keys(&self) -> impl Iterator<Item = &K> {
-        self.keys.left_values()
+        self.keys.iter().map(|k| &*k.0)
     }
 
     pub fn ids(&self) -> impl Iterator<Item = SlabMapId<V>> + '_ {
-        self.keys.right_values().copied().map(|k| SlabMapId::new(k))
+        self.ids.iter().enumerate().map(|(i, _)| SlabMapId::new(i))
     }
 
     pub fn keys_ids(&self) -> impl Iterator<Item = (&'_ K, SlabMapId<V>)> + '_ {
-        self.keys.iter().map(|(k, i)| (k, SlabMapId::new(*i)))
+        self.keys
+            .iter()
+            .enumerate()
+            .map(|(id, k)| (&*k.0, SlabMapId::new(id)))
     }
 }
 
@@ -352,6 +401,7 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher + Default> Default for SlabMap<K, V, H
     fn default() -> Self {
         Self {
             items: Default::default(),
+            ids: Default::default(),
             keys: Default::default(),
         }
     }
