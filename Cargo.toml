@@ -18,7 +18,7 @@ duplicate = "1"
 itertools = "0.12"
 lazy_static = "1"
 macroquad = { version = "0.4", default-features = false }
-miette = { version = "7", features = ["fancy"] }
+miette = { version = "7" }
 miniquad = { version = "0.4", default-features = false }
 nohash-hasher = "0.2"
 prettyplease = "0.2"

@@ -3,7 +3,7 @@
 //! https://github.com/billyrieger/bimap-rs/blob/3dca651620845a939ee9e5393c0a8fe9fe0a1656/src/mem.rs
 //!
 //! > bimap-rs is dual-licensed under the [Apache License](https://github.com/billyrieger/bimap-rs/blob/3dca651620845a939ee9e5393c0a8fe9fe0a1656/LICENSE_APACHE) and the [MIT License](https://github.com/billyrieger/bimap-rs/blob/3dca651620845a939ee9e5393c0a8fe9fe0a1656/LICENSE_MIT). As a library user, this means that you are free to choose either license when using bimap-rs. As a library contributor, this means that any work you contribute to bimap-rs will be similarly dual-licensed.
-use core::{borrow::Borrow, fmt, ops::Bound};
+use core::{borrow::Borrow, fmt};
 use std::rc::Rc;
 
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -32,14 +32,6 @@ impl<T: ?Sized> Wrapper<T> {
     pub fn wrap(value: &T) -> &Self {
         // safe because Wrapper<T> is #[repr(transparent)]
         unsafe { &*(value as *const T as *const Self) }
-    }
-
-    pub fn wrap_bound(bound: Bound<&T>) -> Bound<&Self> {
-        match bound {
-            Bound::Included(t) => Bound::Included(Self::wrap(t)),
-            Bound::Excluded(t) => Bound::Excluded(Self::wrap(t)),
-            Bound::Unbounded => Bound::Unbounded,
-        }
     }
 }
 

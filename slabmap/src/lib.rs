@@ -353,7 +353,7 @@ impl<K: Eq + Hash, V, Hasher: BuildHasher> SlabMap<K, V, Hasher> {
             .map(|(id, e)| (SlabMapId::new(id), e))
     }
 
-    pub fn into_iter(mut self) -> impl Iterator<Item = (K, usize, V)> {
+    pub fn into_iter(self) -> impl Iterator<Item = (K, usize, V)> {
         // drop keys map to free RCs
         drop(self.ids);
 
